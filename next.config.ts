@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "baochua.carrd.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "picsum.photos",
         pathname: "/**",
       },

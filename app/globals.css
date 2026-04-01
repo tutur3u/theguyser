@@ -121,6 +121,12 @@ body {
   margin: 0;
 }
 
+button,
+a[href],
+[role="button"] {
+  cursor: pointer;
+}
+
 ::-webkit-scrollbar {
   width: 12px;
 }

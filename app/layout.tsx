@@ -10,8 +10,8 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Wii U Style Portfolio",
-  description: "A playful portfolio inspired by the Wii U dashboard.",
+  title: "Bao Chua Portfolio",
+  description: "Bao Chua's portfolio reimagined inside a playful Wii U-inspired interface.",
 };
 
 export default function RootLayout({
