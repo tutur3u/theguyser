@@ -43,8 +43,9 @@ export const GAME_PROJECTS: Project[] = [
     description:
       "A visual novel about Lucille and Yvaine’s relationship enabled through the use of the Necrolist app with simple to control mini games.",
     href: "https://exocorpse.itch.io/necrolist",
-    actionLabel: "Play",
+    actionLabel: "Open Itch.io",
     image: "https://baochua.carrd.co/assets/images/container03.jpg?v=4f0e4032",
+    playHref: "/games/necrolist",
   },
   {
     id: "spaceship-fps",

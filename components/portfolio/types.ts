@@ -35,6 +35,7 @@ export type Project = {
   href: string;
   actionLabel: string;
   image: string;
+  playHref?: string;
 };
 
 export type ResourceLink = {

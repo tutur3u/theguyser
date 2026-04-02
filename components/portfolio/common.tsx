@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { ExternalLink, Moon, Sun, User } from "lucide-react";
 import { motion } from "motion/react";
 import { MII_DATA } from "@/components/portfolio/data";
@@ -94,7 +95,21 @@ export function ProjectCard({ project }: { project: Project }) {
 
       <div className="space-y-5 p-6 sm:p-7">
         <p className="text-base leading-relaxed text-gray-600 dark:text-gray-300 sm:text-[1.05rem]">{project.description}</p>
-        <ExternalAction href={project.href} label={project.actionLabel} className="bg-gradient-to-r from-sky-500 to-blue-600 text-white" />
+        <div className="flex flex-wrap gap-3">
+          {project.playHref ? (
+            <Link
+              href={project.playHref}
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-3 text-sm font-black text-white shadow-md transition-transform hover:-translate-y-0.5"
+            >
+              Play In Browser
+            </Link>
+          ) : null}
+          <ExternalAction
+            href={project.href}
+            label={project.actionLabel}
+            className={project.playHref ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900" : "bg-gradient-to-r from-sky-500 to-blue-600 text-white"}
+          />
+        </div>
       </div>
     </div>
   );
