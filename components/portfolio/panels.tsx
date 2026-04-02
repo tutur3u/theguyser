@@ -116,14 +116,14 @@ export function PortfolioPanels({
       return (
         <div className="flex h-full flex-col items-center justify-center text-center">
           <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Number.POSITIVE_INFINITY, duration: 20, ease: "linear" }}
-            className="relative mb-8 flex h-48 w-48 items-center justify-center overflow-hidden rounded-full border-[12px] border-gray-800 bg-gradient-to-tr from-blue-400 via-cyan-400 to-sky-500 shadow-2xl dark:border-gray-900"
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="mb-8 w-full max-w-[17rem] overflow-hidden rounded-[2rem] border-4 border-white bg-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] dark:border-gray-900 dark:bg-gray-800"
           >
-            <div className="absolute inset-0 h-[200%] w-[200%] -translate-x-1/4 -translate-y-1/4 bg-gradient-to-tr from-transparent via-white/40 to-transparent" />
-            <div className="z-10 h-12 w-12 rounded-full border-4 border-gray-800 bg-white shadow-inner dark:border-gray-900 dark:bg-gray-200" />
+            <ProfileAvatar alt="Bao Chua portrait" image={PROFILE.image} size={320} />
           </motion.div>
-          <h2 className="mb-4 text-4xl font-black text-gray-800 dark:text-gray-100">{PROFILE.name}</h2>
+          <h2 className="mb-4 text-4xl font-black text-gray-800 dark:text-gray-100">Bao&apos;s Portfolio</h2>
           <p className="mb-3 text-lg font-bold text-sky-600 dark:text-sky-300">{PROFILE.role}</p>
           <p className="mb-8 max-w-2xl text-lg text-gray-600 dark:text-gray-300">
             {PROFILE.intro} {PROFILE.summary}
@@ -139,15 +139,15 @@ export function PortfolioPanels({
       );
     case "about":
       return (
-        <div className="mx-auto max-w-4xl space-y-6">
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-            <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="mx-auto max-w-4xl space-y-6 sm:space-y-7">
+          <div className="grid gap-6 lg:grid-cols-[260px_1fr] lg:gap-7">
+            <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-7">
               <div className="overflow-hidden rounded-[1.5rem] border-4 border-white shadow-lg dark:border-gray-900">
                 <ProfileAvatar alt="Bao Chua portrait" image={PROFILE.image} />
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
               <p className="mb-2 text-sm font-black tracking-[0.35em] text-green-500 uppercase dark:text-green-300">Profile</p>
               <h3 className="mb-2 text-3xl font-black text-gray-800 dark:text-gray-100">{PROFILE.name}</h3>
               <p className="mb-5 text-xl font-bold text-gray-500 dark:text-gray-400">{PROFILE.role}</p>
@@ -197,7 +197,7 @@ export function PortfolioPanels({
       );
     case "skills":
       return (
-        <div className="mx-auto max-w-3xl space-y-6">
+        <div className="mx-auto max-w-3xl space-y-6 sm:space-y-7">
           <div className="grid gap-4 md:grid-cols-3">
             <StatCard
               label="Games"
@@ -219,7 +219,7 @@ export function PortfolioPanels({
             />
           </div>
 
-          <div className="rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
             <div className="mb-6 flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-300">
                 <Settings className="h-7 w-7" />
@@ -329,7 +329,7 @@ export function PortfolioPanels({
     case "browser":
       return (
         <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex items-center gap-4 border-b border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-900 sm:flex-nowrap sm:gap-4">
             <div className="flex gap-2">
               <button
                 type="button"
@@ -363,7 +363,7 @@ export function PortfolioPanels({
             </a>
           </div>
 
-          <div className="grid flex-1 gap-6 overflow-y-auto bg-gray-50 p-6 dark:bg-gray-800/50 md:grid-cols-2">
+          <div className="grid flex-1 gap-6 overflow-y-auto bg-gray-50 p-4 dark:bg-gray-800/50 sm:p-6 md:grid-cols-2">
             <div className="rounded-[1.75rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <div className="mb-4 flex items-center gap-3">
                 <Search className="h-6 w-6 text-cyan-500 dark:text-cyan-300" />
@@ -405,8 +405,8 @@ export function PortfolioPanels({
       );
     case "contact":
       return (
-        <div className="mx-auto max-w-3xl space-y-6">
-          <div className="rounded-[2rem] border border-gray-100 bg-white p-8 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="mx-auto max-w-3xl space-y-6 sm:space-y-7">
+          <div className="rounded-[2rem] border border-gray-100 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
             <Mail className="mx-auto mb-4 h-16 w-16 text-yellow-400" />
             <h3 className="text-3xl font-black text-gray-800 dark:text-gray-100">Contact Information</h3>
             <p className="mt-3 text-lg text-gray-500 dark:text-gray-400">
@@ -419,7 +419,7 @@ export function PortfolioPanels({
       );
     case "experience":
       return (
-        <div className="mx-auto max-w-4xl space-y-6">
+        <div className="mx-auto max-w-4xl space-y-6 sm:space-y-7">
           {GAME_PROJECTS.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
@@ -427,7 +427,7 @@ export function PortfolioPanels({
       );
     case "miiverse":
       return (
-        <div className="mx-auto max-w-4xl space-y-6">
+        <div className="mx-auto max-w-4xl space-y-6 sm:space-y-7">
           {RESEARCH_PROJECTS.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
@@ -435,7 +435,7 @@ export function PortfolioPanels({
       );
     case "awards":
       return (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
           {FOCUS_AREAS.map((area) => (
             <div
               key={area.title}
@@ -452,7 +452,7 @@ export function PortfolioPanels({
       );
     case "gallery":
       return (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {[...GAME_PROJECTS, ...RESEARCH_PROJECTS].map((project) => (
             <a
               key={project.id}
@@ -477,8 +477,8 @@ export function PortfolioPanels({
       );
     case "music":
       return (
-        <div className="mx-auto max-w-3xl space-y-8">
-          <div className="rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
+          <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
             <div className="flex h-32 items-end justify-center gap-2">
               {EQUALIZER_DURATIONS.map((duration, index) => (
                 <motion.div
@@ -525,7 +525,7 @@ export function PortfolioPanels({
       return (
         <div className="mx-auto flex h-full max-w-6xl flex-col gap-6">
           <div className="grid gap-4 md:grid-cols-[320px_1fr]">
-            <div className="rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
               <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
                 <FileText className="h-12 w-12 text-gray-800 dark:text-gray-200" />
               </div>
@@ -574,7 +574,7 @@ export function PortfolioPanels({
               <iframe
                 src={RESUME_PREVIEW_URL}
                 title="Bao Chua CV preview"
-                className="h-[70vh] w-full bg-gray-100 dark:bg-gray-900"
+                className="h-[60vh] w-full bg-gray-100 dark:bg-gray-900 sm:h-[70vh]"
                 allow="autoplay"
               />
             </div>

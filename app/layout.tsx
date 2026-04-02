@@ -10,7 +10,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Bao Chua Portfolio",
+  title: "Bao's Portfolio",
   description: "Bao Chua's portfolio reimagined inside a playful Wii U-inspired interface.",
 };
 
@@ -26,7 +26,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className="min-h-full overflow-hidden font-sans text-gray-800 dark:text-gray-100"
+        className="min-h-full overflow-x-hidden font-sans text-gray-800 dark:text-gray-100"
         suppressHydrationWarning
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

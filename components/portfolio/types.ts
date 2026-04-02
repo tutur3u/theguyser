@@ -24,6 +24,7 @@ export type AppDefinition = {
   icon: LucideIcon;
   color: string;
   size: string;
+  artwork?: string[];
 };
 
 export type Project = {

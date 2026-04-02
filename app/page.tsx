@@ -88,12 +88,12 @@ export default function PortfolioPage() {
   };
 
   return (
-    <main className="wii-bg relative flex min-h-screen flex-col overflow-hidden">
+    <main className="wii-bg relative flex min-h-screen flex-col overflow-x-hidden">
       <WaraWaraPlaza />
 
       <PortfolioHeader isDark={resolvedTheme === "dark"} mounted={themeReady} onThemeToggle={handleThemeToggle} time={time} />
 
-      <div className="z-10 flex flex-1 items-center justify-center p-4 pb-24 md:p-8">
+      <div className="z-10 flex flex-1 items-start justify-center px-4 pb-12 pt-6 sm:px-5 sm:pb-16 sm:pt-8 md:items-center md:px-8 md:pb-24 md:pt-8">
         <DashboardMenu onAppClick={handleAppClick} selectedMenuId={selectedMenuId} setMenuButtonRef={setMenuButtonRef} />
       </div>
 

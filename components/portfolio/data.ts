@@ -238,6 +238,7 @@ export const APPS: AppDefinition[] = [
     icon: Briefcase,
     color: "bg-gradient-to-b from-[#a78bfa] to-[#7c3aed]",
     size: "col-span-2 row-span-1",
+    artwork: GAME_PROJECTS.map((project) => project.image),
   },
   {
     id: "miiverse",
@@ -245,6 +246,7 @@ export const APPS: AppDefinition[] = [
     icon: MessageSquare,
     color: "bg-gradient-to-b from-[#86efac] to-[#22c55e]",
     size: "col-span-2 row-span-1",
+    artwork: RESEARCH_PROJECTS.map((project) => project.image),
   },
   {
     id: "awards",
@@ -259,6 +261,7 @@ export const APPS: AppDefinition[] = [
     icon: ImageIcon,
     color: "bg-gradient-to-b from-[#f472b6] to-[#db2777]",
     size: "col-span-1 row-span-1",
+    artwork: [...GAME_PROJECTS, ...RESEARCH_PROJECTS].map((project) => project.image),
   },
   {
     id: "music",
@@ -292,7 +295,7 @@ export const APPS: AppDefinition[] = [
 
 export const DISC_APP: AppDefinition = {
   id: "disc",
-  title: "Bao Chua Portfolio",
+  title: "Bao's Portfolio",
   icon: Gamepad2,
   color: "bg-blue-500",
   size: "col-span-2 row-span-2",

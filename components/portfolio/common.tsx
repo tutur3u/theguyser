@@ -81,7 +81,7 @@ export function ProjectCard({ project }: { project: Project }) {
   return (
     <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div
-        className="relative h-44 bg-cover bg-center"
+        className="relative h-52 bg-cover bg-center sm:h-60"
         style={{
           backgroundImage: `linear-gradient(135deg, rgba(15,23,42,0.78), rgba(15,23,42,0.25)), url("${project.image}")`,
         }}
@@ -92,8 +92,8 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
       </div>
 
-      <div className="space-y-4 p-6">
-        <p className="text-base leading-relaxed text-gray-600 dark:text-gray-300">{project.description}</p>
+      <div className="space-y-5 p-6 sm:p-7">
+        <p className="text-base leading-relaxed text-gray-600 dark:text-gray-300 sm:text-[1.05rem]">{project.description}</p>
         <ExternalAction href={project.href} label={project.actionLabel} className="bg-gradient-to-r from-sky-500 to-blue-600 text-white" />
       </div>
     </div>
@@ -162,11 +162,11 @@ export function ResourceGrid({
   onOpenApp?: (appId: AppId) => void;
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-5 md:grid-cols-2">
       {resources.map((resource) => (
         <div
           key={resource.id}
-          className="group flex items-start gap-4 rounded-[1.75rem] border border-gray-100 bg-white p-5 shadow-sm transition-transform hover:-translate-y-1 dark:border-gray-700 dark:bg-gray-800"
+          className="group flex items-start gap-4 rounded-[1.75rem] border border-gray-100 bg-white p-5 shadow-sm transition-transform hover:-translate-y-1 dark:border-gray-700 dark:bg-gray-800 sm:p-6"
         >
           <ResourcePrimaryAction resource={resource} onOpenApp={onOpenApp} />
           <ResourceExternalButton href={resource.href} />
