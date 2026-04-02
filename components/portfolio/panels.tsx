@@ -130,15 +130,15 @@ export function PortfolioPanels({
           >
             <ProfileAvatar alt="Bao Chua portrait" image={PROFILE.image} size={320} />
           </motion.div>
-          <h2 className="mb-4 text-4xl font-black text-gray-800 dark:text-gray-100">Bao&apos;s Portfolio</h2>
-          <p className="mb-3 text-lg font-bold text-sky-600 dark:text-sky-300">{PROFILE.role}</p>
-          <p className="mb-8 max-w-2xl text-lg text-gray-600 dark:text-gray-300">
+          <h2 className="mb-4 text-3xl font-black text-gray-800 dark:text-gray-100 sm:text-4xl">Bao&apos;s Portfolio</h2>
+          <p className="mb-3 text-base font-bold text-sky-600 dark:text-sky-300 sm:text-lg">{PROFILE.role}</p>
+          <p className="mb-8 max-w-2xl text-base text-gray-600 dark:text-gray-300 sm:text-lg">
             {PROFILE.intro} {PROFILE.summary}
           </p>
           <button
             type="button"
             onClick={() => onLaunchApp("about")}
-            className="animate-pulse rounded-full bg-blue-500 px-16 py-4 text-3xl font-black text-white shadow-[0_8px_0_#1d4ed8] transition-all hover:translate-y-1 hover:shadow-[0_6px_0_#1d4ed8] active:translate-y-2 active:shadow-none"
+            className="animate-pulse rounded-full bg-blue-500 px-10 py-3 text-2xl font-black text-white shadow-[0_8px_0_#1d4ed8] transition-all hover:translate-y-1 hover:shadow-[0_6px_0_#1d4ed8] active:translate-y-2 active:shadow-none sm:px-16 sm:py-4 sm:text-3xl"
           >
             START
           </button>
@@ -241,7 +241,7 @@ export function PortfolioPanels({
 
             <div className="space-y-6">
               <div className="rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
-                <div className="mb-4 flex items-center justify-between gap-4">
+                <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div>
                     <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Theme</div>
                     <div className="mt-1 text-xl font-black text-gray-800 dark:text-gray-100">Website Theme</div>
@@ -279,7 +279,7 @@ export function PortfolioPanels({
               </div>
 
               <div className="rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
-                <div className="mb-5 flex items-center justify-between gap-4">
+                <div className="mb-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div>
                     <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Motion</div>
                     <div className="mt-1 text-xl font-black text-gray-800 dark:text-gray-100">Launch Animation</div>
@@ -306,7 +306,7 @@ export function PortfolioPanels({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <div>
                       <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Speed</div>
                       <div className="mt-1 text-lg font-black text-gray-800 dark:text-gray-100">Animation Duration</div>
@@ -327,7 +327,7 @@ export function PortfolioPanels({
                       className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-sky-500 dark:bg-gray-700"
                       aria-label="Launch animation speed"
                     />
-                    <div className="mt-3 flex justify-between text-xs font-black tracking-[0.16em] text-gray-400 uppercase dark:text-gray-500">
+                    <div className="mt-3 grid grid-cols-3 gap-x-2 gap-y-2 text-center text-[0.65rem] font-black tracking-[0.12em] text-gray-400 uppercase dark:text-gray-500 sm:flex sm:justify-between sm:gap-0 sm:text-xs sm:tracking-[0.16em]">
                       {LAUNCH_ANIMATION_SPEED_OPTIONS.map((speed) => (
                         <span key={speed}>{formatLaunchAnimationDuration(speed)}</span>
                       ))}
@@ -344,7 +344,7 @@ export function PortfolioPanels({
               </div>
 
               <div className="rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div>
                     <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Storage</div>
                     <div className="mt-1 text-xl font-black text-gray-800 dark:text-gray-100">Remember Preferences</div>
@@ -402,52 +402,52 @@ export function PortfolioPanels({
       return (
         <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
           <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-900 sm:flex-nowrap sm:gap-4">
-            <div className="flex gap-2">
+            <div className="flex w-full gap-2 sm:w-auto">
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white font-bold text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white font-bold text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
               >
                 &lt;
               </button>
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white font-bold text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white font-bold text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
               >
                 &gt;
               </button>
             </div>
-            <div className="flex flex-1 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-1.5 dark:border-gray-600 dark:bg-gray-800">
+            <div className="order-3 flex w-full min-w-0 items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800 sm:order-none sm:flex-1 sm:px-4">
               <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 readOnly
                 value={PROFILE.site}
-                className="w-full bg-transparent text-sm font-medium text-gray-600 outline-none dark:text-gray-300"
+                className="w-full min-w-0 bg-transparent text-sm font-medium text-gray-600 outline-none dark:text-gray-300"
               />
             </div>
             <a
               href={PROFILE.site}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full bg-cyan-500 px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-cyan-600"
+              className="rounded-full bg-cyan-500 px-4 py-1.5 text-center text-sm font-bold text-white transition-colors hover:bg-cyan-600 sm:min-w-[6.5rem]"
             >
               Open
             </a>
           </div>
 
           <div className="grid flex-1 gap-6 overflow-y-auto bg-gray-50 p-4 dark:bg-gray-800/50 sm:p-6 md:grid-cols-2">
-            <div className="rounded-[1.75rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
               <div className="mb-4 flex items-center gap-3">
                 <Search className="h-6 w-6 text-cyan-500 dark:text-cyan-300" />
-                <h3 className="text-xl font-black text-gray-800 dark:text-gray-100">Portfolio Bookmarks</h3>
+                <h3 className="text-lg font-black text-gray-800 dark:text-gray-100 sm:text-xl">Portfolio Bookmarks</h3>
               </div>
               <ResourceRows resources={RESOURCE_LINKS} onOpenApp={onLaunchApp} />
             </div>
 
-            <div className="rounded-[1.75rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
               <div className="mb-4 flex items-center gap-3">
                 <Globe className="h-6 w-6 text-blue-500 dark:text-blue-300" />
-                <h3 className="text-xl font-black text-gray-800 dark:text-gray-100">Browse Inside The Console</h3>
+                <h3 className="text-lg font-black text-gray-800 dark:text-gray-100 sm:text-xl">Browse Inside The Console</h3>
               </div>
               <div className="space-y-3">
                 {[
@@ -461,9 +461,9 @@ export function PortfolioPanels({
                     key={item.label}
                     type="button"
                     onClick={() => onLaunchApp(item.appId)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-950"
+                    className="flex w-full flex-col items-start gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-950 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <div className="font-black text-gray-800 dark:text-gray-100">{item.label}</div>
                       <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{item.note}</div>
                     </div>
@@ -604,7 +604,7 @@ export function PortfolioPanels({
               <h3 className="mb-2 text-center text-2xl font-black text-gray-800 dark:text-gray-100">CV Viewer</h3>
               <p className="mb-6 text-center text-gray-500 dark:text-gray-400">{PROFILE.name}</p>
 
-              <div className="mb-8 grid grid-cols-3 gap-4">
+              <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
                   <div className="text-xl font-black text-gray-800 dark:text-gray-100">{GAME_PROJECTS.length}</div>
                   <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Games</div>
@@ -667,10 +667,10 @@ export function PortfolioPanels({
       );
     case "eshop":
       return (
-        <div className="mx-auto max-w-2xl rounded-3xl border-4 border-orange-100 bg-white p-8 text-center shadow-lg dark:border-orange-900 dark:bg-gray-800">
+        <div className="mx-auto max-w-2xl rounded-3xl border-4 border-orange-100 bg-white p-5 text-center shadow-lg dark:border-orange-900 dark:bg-gray-800 sm:p-8">
           <ShoppingBag className="mx-auto mb-4 h-20 w-20 text-orange-500" />
-          <h2 className="mb-2 text-4xl font-black text-gray-800 dark:text-gray-100">Portfolio Kit</h2>
-          <p className="mb-8 text-xl text-gray-600 dark:text-gray-300">
+          <h2 className="mb-2 text-3xl font-black text-gray-800 dark:text-gray-100 sm:text-4xl">Portfolio Kit</h2>
+          <p className="mb-8 text-lg text-gray-600 dark:text-gray-300 sm:text-xl">
             Everything linked from Bao Chua&apos;s Carrd portfolio, packaged inside the current Wii U interface.
           </p>
           <div className="mb-8 rounded-2xl bg-orange-50 p-6 dark:bg-orange-900/30">
@@ -692,7 +692,7 @@ export function PortfolioPanels({
             <button
               type="button"
               onClick={() => onLaunchApp("github")}
-              className="rounded-full bg-gradient-to-r from-orange-400 to-orange-500 px-12 py-4 text-2xl font-black text-white shadow-[0_6px_0_#c2410c] transition-all hover:translate-y-1 hover:shadow-[0_4px_0_#c2410c] active:translate-y-2 active:shadow-none"
+              className="rounded-full bg-gradient-to-r from-orange-400 to-orange-500 px-8 py-4 text-xl font-black text-white shadow-[0_6px_0_#c2410c] transition-all hover:translate-y-1 hover:shadow-[0_4px_0_#c2410c] active:translate-y-2 active:shadow-none sm:px-12 sm:text-2xl"
             >
               Open Resume
             </button>

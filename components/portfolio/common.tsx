@@ -126,12 +126,12 @@ function ResourcePrimaryAction({
 }) {
   const content = (
     <>
-      <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${resource.color} shadow-md`}>
-        <resource.icon className="h-7 w-7 text-white" />
+      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${resource.color} shadow-md sm:h-14 sm:w-14`}>
+        <resource.icon className="h-6 w-6 text-white sm:h-7 sm:w-7" />
       </div>
       <div className="min-w-0 flex-1 text-left">
         <div className="font-black text-gray-800 dark:text-gray-100">{resource.label}</div>
-        <div className="mt-1 text-sm font-medium text-gray-500 dark:text-gray-400">{resource.note}</div>
+        <div className="mt-1 break-words text-sm font-medium text-gray-500 dark:text-gray-400">{resource.note}</div>
       </div>
     </>
   );
@@ -141,7 +141,7 @@ function ResourcePrimaryAction({
       <button
         type="button"
         onClick={() => onOpenApp(resource.appId!)}
-        className={`flex min-w-0 flex-1 items-start gap-4 ${compact ? "items-center" : ""}`}
+        className={`flex min-w-0 flex-1 items-start gap-3 sm:gap-4 ${compact ? "items-center" : ""}`}
       >
         {content}
       </button>
@@ -149,7 +149,7 @@ function ResourcePrimaryAction({
   }
 
   return (
-    <a href={resource.href} target="_blank" rel="noreferrer" className={`flex min-w-0 flex-1 items-start gap-4 ${compact ? "items-center" : ""}`}>
+    <a href={resource.href} target="_blank" rel="noreferrer" className={`flex min-w-0 flex-1 items-start gap-3 sm:gap-4 ${compact ? "items-center" : ""}`}>
       {content}
     </a>
   );
@@ -177,14 +177,16 @@ export function ResourceGrid({
   onOpenApp?: (appId: AppId) => void;
 }) {
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2 md:gap-5">
       {resources.map((resource) => (
         <div
           key={resource.id}
-          className="group flex items-start gap-4 rounded-[1.75rem] border border-gray-100 bg-white p-5 shadow-sm transition-transform hover:-translate-y-1 dark:border-gray-700 dark:bg-gray-800 sm:p-6"
+          className="group flex flex-col gap-4 rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm transition-transform hover:-translate-y-1 dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-start sm:p-6"
         >
           <ResourcePrimaryAction resource={resource} onOpenApp={onOpenApp} />
-          <ResourceExternalButton href={resource.href} />
+          <div className="flex justify-end sm:justify-start">
+            <ResourceExternalButton href={resource.href} />
+          </div>
         </div>
       ))}
     </div>
@@ -203,10 +205,12 @@ export function ResourceRows({
       {resources.map((resource) => (
         <div
           key={resource.id}
-          className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-950"
+          className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-3 py-3 transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-950 sm:flex-row sm:items-center sm:px-4"
         >
           <ResourcePrimaryAction resource={resource} onOpenApp={onOpenApp} compact />
-          <ResourceExternalButton href={resource.href} />
+          <div className="flex justify-end sm:block">
+            <ResourceExternalButton href={resource.href} />
+          </div>
         </div>
       ))}
     </div>

@@ -94,7 +94,7 @@ export default function PortfolioPage() {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      setTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }).replace(/\s/g, "\u00A0"));
     };
 
     updateTime();
