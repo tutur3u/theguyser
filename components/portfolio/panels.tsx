@@ -401,8 +401,8 @@ export function PortfolioPanels({
     case "browser":
       return (
         <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-900 sm:flex-nowrap sm:gap-4">
-            <div className="flex w-full gap-2 sm:w-auto">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-gray-200 bg-gray-100 p-2.5 dark:border-gray-700 dark:bg-gray-900 sm:gap-4 sm:p-3">
+            <div className="flex gap-2">
               <button
                 type="button"
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white font-bold text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
@@ -416,20 +416,20 @@ export function PortfolioPanels({
                 &gt;
               </button>
             </div>
-            <div className="order-3 flex w-full min-w-0 items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800 sm:order-none sm:flex-1 sm:px-4">
+            <div className="flex min-w-0 items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800 sm:px-4">
               <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <input
-                type="text"
-                readOnly
-                value={PROFILE.site}
-                className="w-full min-w-0 bg-transparent text-sm font-medium text-gray-600 outline-none dark:text-gray-300"
-              />
+              <div
+                className="min-w-0 flex-1 truncate whitespace-nowrap text-sm font-medium text-gray-600 dark:text-gray-300"
+                aria-label={`Address bar: ${PROFILE.site}`}
+              >
+                {PROFILE.site}
+              </div>
             </div>
             <a
               href={PROFILE.site}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full bg-cyan-500 px-4 py-1.5 text-center text-sm font-bold text-white transition-colors hover:bg-cyan-600 sm:min-w-[6.5rem]"
+              className="shrink-0 rounded-full bg-cyan-500 px-3 py-1.5 text-center text-sm font-bold text-white transition-colors hover:bg-cyan-600 sm:min-w-[6.5rem] sm:px-4"
             >
               Open
             </a>

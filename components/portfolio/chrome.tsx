@@ -173,11 +173,23 @@ export function TabletDialog({
     }
 
     const { body, documentElement } = document;
+    const scrollY = window.scrollY;
     const previousBodyOverflow = body.style.overflow;
+    const previousBodyPosition = body.style.position;
+    const previousBodyTop = body.style.top;
+    const previousBodyLeft = body.style.left;
+    const previousBodyRight = body.style.right;
+    const previousBodyWidth = body.style.width;
     const previousBodyTouchAction = body.style.touchAction;
     const previousHtmlOverflow = documentElement.style.overflow;
 
+    // Lock the page without losing the current viewport offset on mobile browsers.
     body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
     body.style.touchAction = "none";
     documentElement.style.overflow = "hidden";
 
@@ -191,8 +203,14 @@ export function TabletDialog({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       body.style.overflow = previousBodyOverflow;
+      body.style.position = previousBodyPosition;
+      body.style.top = previousBodyTop;
+      body.style.left = previousBodyLeft;
+      body.style.right = previousBodyRight;
+      body.style.width = previousBodyWidth;
       body.style.touchAction = previousBodyTouchAction;
       documentElement.style.overflow = previousHtmlOverflow;
+      window.scrollTo({ top: scrollY, left: 0, behavior: "auto" });
     };
   }, [activeApp, onClose]);
 
