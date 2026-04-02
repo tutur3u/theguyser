@@ -6,6 +6,7 @@ import {
   DEFAULT_LAUNCH_ANIMATION_DURATION,
   EQUALIZER_DURATIONS,
   FOCUS_AREAS,
+  formatLaunchAnimationDuration,
   GAME_PROJECTS,
   LAUNCH_ANIMATION_SPEED_OPTIONS,
   PROFILE,
@@ -219,7 +220,7 @@ export function PortfolioPanels({
             />
             <StatCard
               label="Animation"
-              value={launchAnimationEnabled ? `${launchAnimationDuration.toFixed(1)}s` : "Off"}
+              value={launchAnimationEnabled ? formatLaunchAnimationDuration(launchAnimationDuration) : "Off"}
               note={launchAnimationEnabled ? "Launch animation speed" : "Launch screen disabled"}
               valueClassName="text-orange-500 dark:text-orange-300"
             />
@@ -311,7 +312,7 @@ export function PortfolioPanels({
                       <div className="mt-1 text-lg font-black text-gray-800 dark:text-gray-100">Animation Duration</div>
                     </div>
                     <div className="rounded-full bg-white px-3 py-1 text-xs font-black tracking-[0.18em] text-gray-500 uppercase shadow-sm dark:bg-gray-800 dark:text-gray-400">
-                      {launchAnimationDuration.toFixed(1)}s
+                      {formatLaunchAnimationDuration(launchAnimationDuration)}
                     </div>
                   </div>
 
@@ -320,7 +321,7 @@ export function PortfolioPanels({
                       type="range"
                       min={LAUNCH_ANIMATION_SPEED_OPTIONS[0]}
                       max={LAUNCH_ANIMATION_SPEED_OPTIONS[LAUNCH_ANIMATION_SPEED_OPTIONS.length - 1]}
-                      step={0.5}
+                      step={0.25}
                       value={launchAnimationDuration}
                       onChange={(event) => setLaunchAnimationDuration(Number(event.target.value))}
                       className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-sky-500 dark:bg-gray-700"
@@ -328,7 +329,7 @@ export function PortfolioPanels({
                     />
                     <div className="mt-3 flex justify-between text-xs font-black tracking-[0.16em] text-gray-400 uppercase dark:text-gray-500">
                       {LAUNCH_ANIMATION_SPEED_OPTIONS.map((speed) => (
-                        <span key={speed}>{speed.toFixed(1)}s</span>
+                        <span key={speed}>{formatLaunchAnimationDuration(speed)}</span>
                       ))}
                     </div>
                     <button

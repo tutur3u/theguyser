@@ -23,7 +23,11 @@ export const LAUNCH_ANIMATION_STORAGE_KEY = "portfolio-launch-animation-enabled"
 export const PORTFOLIO_PREFERENCES_STORAGE_KEY = "portfolio-preferences";
 export const DEFAULT_LAUNCH_ANIMATION_ENABLED = true;
 export const DEFAULT_LAUNCH_ANIMATION_DURATION = 0.5;
-export const LAUNCH_ANIMATION_SPEED_OPTIONS = [0.5, 1, 1.5, 2, 2.5] as const;
+export const LAUNCH_ANIMATION_SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5] as const;
+
+export function formatLaunchAnimationDuration(duration: number) {
+  return `${duration.toFixed(2).replace(/\.?0+$/, "")}s`;
+}
 
 export const PROFILE = {
   name: "Bao Chua",
