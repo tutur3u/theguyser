@@ -20,6 +20,10 @@ import type { AppDefinition, FocusArea, Project, ResourceLink } from "@/componen
 export const RESUME_VIEW_URL = "https://drive.google.com/file/d/1OTN2-CsjFnjOplfzHjHq1yCXJcqRWDtc/view?usp=drive_link";
 export const RESUME_PREVIEW_URL = "https://drive.google.com/file/d/1OTN2-CsjFnjOplfzHjHq1yCXJcqRWDtc/preview";
 export const LAUNCH_ANIMATION_STORAGE_KEY = "portfolio-launch-animation-enabled";
+export const PORTFOLIO_PREFERENCES_STORAGE_KEY = "portfolio-preferences";
+export const DEFAULT_LAUNCH_ANIMATION_ENABLED = true;
+export const DEFAULT_LAUNCH_ANIMATION_DURATION = 0.5;
+export const LAUNCH_ANIMATION_SPEED_OPTIONS = [0.5, 1, 1.5, 2, 2.5] as const;
 
 export const PROFILE = {
   name: "Bao Chua",

@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { APPS, LAUNCH_ANIMATION_STORAGE_KEY } from "@/components/portfolio/data";
+import {
+  APPS,
+  DEFAULT_LAUNCH_ANIMATION_DURATION,
+  DEFAULT_LAUNCH_ANIMATION_ENABLED,
+  LAUNCH_ANIMATION_SPEED_OPTIONS,
+  LAUNCH_ANIMATION_STORAGE_KEY,
+  PORTFOLIO_PREFERENCES_STORAGE_KEY,
+} from "@/components/portfolio/data";
 import { PortfolioPanels } from "@/components/portfolio/panels";
 import { PortfolioHeader, PortfolioFooter, LaunchOverlay, TabletDialog } from "@/components/portfolio/chrome";
 import { WaraWaraPlaza } from "@/components/portfolio/common";
@@ -10,17 +17,66 @@ import { DashboardMenu } from "@/components/portfolio/menu";
 import { useDashboardNavigation } from "@/components/portfolio/use-dashboard-navigation";
 import type { AppDefinition, AppId, ThemeMode } from "@/components/portfolio/types";
 
+type PortfolioPreferences = {
+  launchAnimationEnabled: boolean;
+  launchAnimationDuration: number;
+  rememberPreferences: boolean;
+};
+
+const DEFAULT_PREFERENCES: PortfolioPreferences = {
+  launchAnimationEnabled: DEFAULT_LAUNCH_ANIMATION_ENABLED,
+  launchAnimationDuration: DEFAULT_LAUNCH_ANIMATION_DURATION,
+  rememberPreferences: true,
+};
+
+function normalizeLaunchAnimationDuration(value: number) {
+  return LAUNCH_ANIMATION_SPEED_OPTIONS.includes(value as (typeof LAUNCH_ANIMATION_SPEED_OPTIONS)[number])
+    ? value
+    : DEFAULT_LAUNCH_ANIMATION_DURATION;
+}
+
+function readInitialPreferences(): PortfolioPreferences {
+  if (typeof window === "undefined") {
+    return DEFAULT_PREFERENCES;
+  }
+
+  const storedPreferences = window.localStorage.getItem(PORTFOLIO_PREFERENCES_STORAGE_KEY);
+
+  if (storedPreferences) {
+    try {
+      const parsedPreferences = JSON.parse(storedPreferences) as Partial<PortfolioPreferences>;
+
+      return {
+        launchAnimationEnabled:
+          typeof parsedPreferences.launchAnimationEnabled === "boolean"
+            ? parsedPreferences.launchAnimationEnabled
+            : DEFAULT_LAUNCH_ANIMATION_ENABLED,
+        launchAnimationDuration:
+          typeof parsedPreferences.launchAnimationDuration === "number"
+            ? normalizeLaunchAnimationDuration(parsedPreferences.launchAnimationDuration)
+            : DEFAULT_LAUNCH_ANIMATION_DURATION,
+        rememberPreferences: parsedPreferences.rememberPreferences !== false,
+      };
+    } catch {}
+  }
+
+  const legacyLaunchAnimation = window.localStorage.getItem(LAUNCH_ANIMATION_STORAGE_KEY);
+
+  if (legacyLaunchAnimation !== null) {
+    return {
+      ...DEFAULT_PREFERENCES,
+      launchAnimationEnabled: legacyLaunchAnimation === "true",
+    };
+  }
+
+  return DEFAULT_PREFERENCES;
+}
+
 export default function PortfolioPage() {
   const { resolvedTheme, setTheme, theme } = useTheme();
   const [activeApp, setActiveApp] = useState<AppDefinition | null>(null);
   const [launchingApp, setLaunchingApp] = useState<AppDefinition | null>(null);
-  const [launchAnimationEnabled, setLaunchAnimationEnabled] = useState<boolean>(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return window.localStorage.getItem(LAUNCH_ANIMATION_STORAGE_KEY) === "true";
-  });
+  const [preferences, setPreferences] = useState<PortfolioPreferences>(readInitialPreferences);
   const [time, setTime] = useState("");
   const { selectedMenuId, setMenuButtonRef, setSelectedMenuId } = useDashboardNavigation({
     disabled: activeApp !== null || launchingApp !== null,
@@ -33,6 +89,7 @@ export default function PortfolioPage() {
 
   const themeMode: ThemeMode =
     theme === "light" || theme === "dark" || theme === "system" ? theme : "system";
+  const { launchAnimationDuration, launchAnimationEnabled, rememberPreferences } = preferences;
 
   useEffect(() => {
     const updateTime = () => {
@@ -46,8 +103,22 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(LAUNCH_ANIMATION_STORAGE_KEY, String(launchAnimationEnabled));
-  }, [launchAnimationEnabled]);
+    if (!rememberPreferences) {
+      window.localStorage.removeItem(PORTFOLIO_PREFERENCES_STORAGE_KEY);
+      window.localStorage.removeItem(LAUNCH_ANIMATION_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(
+      PORTFOLIO_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        launchAnimationDuration,
+        launchAnimationEnabled,
+        rememberPreferences,
+      } satisfies PortfolioPreferences),
+    );
+    window.localStorage.removeItem(LAUNCH_ANIMATION_STORAGE_KEY);
+  }, [launchAnimationDuration, launchAnimationEnabled, rememberPreferences]);
 
   const openApp = (app: AppDefinition, { fromDialog = false }: { fromDialog?: boolean } = {}) => {
     setSelectedMenuId(app.id);
@@ -62,7 +133,7 @@ export default function PortfolioPage() {
     window.setTimeout(() => {
       setActiveApp(app);
       setLaunchingApp(null);
-    }, 1500);
+    }, launchAnimationDuration * 1000);
   };
 
   const handleAppClick = (app: AppDefinition) => {
@@ -99,16 +170,28 @@ export default function PortfolioPage() {
 
       <PortfolioFooter />
 
-      <LaunchOverlay launchingApp={launchAnimationEnabled ? launchingApp : null} />
+      <LaunchOverlay animationDuration={launchAnimationDuration} launchingApp={launchAnimationEnabled ? launchingApp : null} />
 
       <TabletDialog activeApp={activeApp} onClose={closeActiveApp}>
         {activeApp ? (
           <PortfolioPanels
             id={activeApp.id}
             options={{
+              launchAnimationDuration,
               launchAnimationEnabled,
               onLaunchApp: handleLaunchApp,
-              setLaunchAnimationEnabled,
+              rememberPreferences,
+              setLaunchAnimationEnabled: (enabled) => setPreferences((current) => ({ ...current, launchAnimationEnabled: enabled })),
+              setLaunchAnimationDuration: (duration) =>
+                setPreferences((current) => ({
+                  ...current,
+                  launchAnimationDuration: normalizeLaunchAnimationDuration(duration),
+                })),
+              setRememberPreferences: (enabled) =>
+                setPreferences((current) => ({
+                  ...current,
+                  rememberPreferences: enabled,
+                })),
               setThemeMode: (nextTheme) => setTheme(nextTheme),
               themeMode,
               themeReady,

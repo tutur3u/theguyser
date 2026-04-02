@@ -57,8 +57,12 @@ export type FocusArea = {
 
 export type AppRenderOptions = {
   launchAnimationEnabled: boolean;
+  launchAnimationDuration: number;
   onLaunchApp: (appId: AppId) => void;
+  rememberPreferences: boolean;
   setLaunchAnimationEnabled: (enabled: boolean) => void;
+  setLaunchAnimationDuration: (duration: number) => void;
+  setRememberPreferences: (enabled: boolean) => void;
   setThemeMode: (theme: ThemeMode) => void;
   themeMode: ThemeMode;
   themeReady: boolean;

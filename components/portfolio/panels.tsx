@@ -3,9 +3,11 @@
 import { FileText, Globe, Mail, Moon, Music, Search, Settings, ShoppingBag, Sun } from "lucide-react";
 import { motion } from "motion/react";
 import {
+  DEFAULT_LAUNCH_ANIMATION_DURATION,
   EQUALIZER_DURATIONS,
   FOCUS_AREAS,
   GAME_PROJECTS,
+  LAUNCH_ANIMATION_SPEED_OPTIONS,
   PROFILE,
   RESEARCH_PROJECTS,
   RESOURCE_LINKS,
@@ -100,9 +102,13 @@ function QuickLaunchCard({
 export function PortfolioPanels({
   id,
   options: {
+    launchAnimationDuration,
     launchAnimationEnabled,
     onLaunchApp,
+    rememberPreferences,
     setLaunchAnimationEnabled,
+    setLaunchAnimationDuration,
+    setRememberPreferences,
     setThemeMode,
     themeMode,
     themeReady,
@@ -213,8 +219,8 @@ export function PortfolioPanels({
             />
             <StatCard
               label="Animation"
-              value={launchAnimationEnabled ? "On" : "Off"}
-              note="Launch screen preference"
+              value={launchAnimationEnabled ? `${launchAnimationDuration.toFixed(1)}s` : "Off"}
+              note={launchAnimationEnabled ? "Launch animation speed" : "Launch screen disabled"}
               valueClassName="text-orange-500 dark:text-orange-300"
             />
           </div>
@@ -227,7 +233,7 @@ export function PortfolioPanels({
               <div>
                 <h3 className="text-2xl font-black text-gray-800 dark:text-gray-100">Site Settings</h3>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Appearance and motion preferences persist in the browser.
+                  Appearance controls live here, and motion settings can optionally be remembered in this browser.
                 </p>
               </div>
             </div>
@@ -272,12 +278,12 @@ export function PortfolioPanels({
               </div>
 
               <div className="rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
-                <div className="flex items-center justify-between gap-4">
+                <div className="mb-5 flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Motion</div>
                     <div className="mt-1 text-xl font-black text-gray-800 dark:text-gray-100">Launch Animation</div>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      Disabled by default. When enabled, apps open with the splash/loading animation.
+                      Enabled by default. Apps open with the splash/loading animation.
                     </p>
                   </div>
                   <button
@@ -294,6 +300,71 @@ export function PortfolioPanels({
                       }`}
                     >
                       {launchAnimationEnabled ? "On" : "Off"}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Speed</div>
+                      <div className="mt-1 text-lg font-black text-gray-800 dark:text-gray-100">Animation Duration</div>
+                    </div>
+                    <div className="rounded-full bg-white px-3 py-1 text-xs font-black tracking-[0.18em] text-gray-500 uppercase shadow-sm dark:bg-gray-800 dark:text-gray-400">
+                      {launchAnimationDuration.toFixed(1)}s
+                    </div>
+                  </div>
+
+                  <div>
+                    <input
+                      type="range"
+                      min={LAUNCH_ANIMATION_SPEED_OPTIONS[0]}
+                      max={LAUNCH_ANIMATION_SPEED_OPTIONS[LAUNCH_ANIMATION_SPEED_OPTIONS.length - 1]}
+                      step={0.5}
+                      value={launchAnimationDuration}
+                      onChange={(event) => setLaunchAnimationDuration(Number(event.target.value))}
+                      className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-sky-500 dark:bg-gray-700"
+                      aria-label="Launch animation speed"
+                    />
+                    <div className="mt-3 flex justify-between text-xs font-black tracking-[0.16em] text-gray-400 uppercase dark:text-gray-500">
+                      {LAUNCH_ANIMATION_SPEED_OPTIONS.map((speed) => (
+                        <span key={speed}>{speed.toFixed(1)}s</span>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLaunchAnimationDuration(DEFAULT_LAUNCH_ANIMATION_DURATION)}
+                      className="mt-3 text-sm font-black text-sky-600 transition-opacity hover:opacity-75 dark:text-sky-300"
+                    >
+                      Reset to 0.5s
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Storage</div>
+                    <div className="mt-1 text-xl font-black text-gray-800 dark:text-gray-100">Remember Preferences</div>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      Save your animation settings in this browser. Turn it off to keep changes for the current visit only.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRememberPreferences(!rememberPreferences)}
+                    className={`relative inline-flex h-12 w-24 items-center rounded-full px-2 transition-colors ${
+                      rememberPreferences ? "bg-sky-500" : "bg-gray-300 dark:bg-gray-700"
+                    }`}
+                    aria-pressed={rememberPreferences}
+                  >
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-full bg-white text-[0.65rem] font-black uppercase text-gray-500 shadow-md transition-transform ${
+                        rememberPreferences ? "translate-x-12" : "translate-x-0"
+                      }`}
+                    >
+                      {rememberPreferences ? "On" : "Off"}
                     </span>
                   </button>
                 </div>

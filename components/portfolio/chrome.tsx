@@ -108,7 +108,18 @@ export function PortfolioFooter() {
   );
 }
 
-export function LaunchOverlay({ launchingApp }: { launchingApp: AppDefinition | null }) {
+export function LaunchOverlay({
+  animationDuration,
+  launchingApp,
+}: {
+  animationDuration: number;
+  launchingApp: AppDefinition | null;
+}) {
+  const overlayFadeDuration = Math.max(animationDuration * 0.35, 0.2);
+  const iconDuration = Math.max(animationDuration * 0.7, 0.35);
+  const indicatorDelay = Math.max(animationDuration * 0.3, 0.1);
+  const indicatorDuration = Math.max(animationDuration * 0.85, 0.45);
+
   return (
     <AnimatePresence>
       {launchingApp ? (
@@ -116,22 +127,28 @@ export function LaunchOverlay({ launchingApp }: { launchingApp: AppDefinition | 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: overlayFadeDuration, ease: "easeOut" }}
           className="fixed inset-0 z-[60] flex items-center justify-center bg-white dark:bg-gray-900"
         >
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", damping: 15, stiffness: 100 }}
+            transition={{ duration: iconDuration, ease: [0.22, 1, 0.36, 1] }}
             className={`flex h-48 w-48 items-center justify-center rounded-[40px] shadow-2xl ${launchingApp.color}`}
           >
             <launchingApp.icon className="h-24 w-24 text-white drop-shadow-lg" />
           </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="absolute bottom-10 flex gap-2">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: indicatorDelay, duration: overlayFadeDuration, ease: "easeOut" }}
+            className="absolute bottom-10 flex gap-2"
+          >
             {[0, 150, 300].map((delay) => (
               <div
                 key={delay}
                 className="h-4 w-4 animate-bounce rounded-full bg-gray-300 dark:bg-gray-600"
-                style={{ animationDelay: `${delay}ms` }}
+                style={{ animationDelay: `${delay}ms`, animationDuration: `${indicatorDuration}s` }}
               />
             ))}
           </motion.div>

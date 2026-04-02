@@ -9,7 +9,18 @@ const nunito = Nunito({
   subsets: ["latin"],
 });
 
+const metadataBase = (() => {
+  const rawUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.VERCEL_URL ??
+    "http://localhost:3000";
+
+  return new URL(rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`);
+})();
+
 export const metadata: Metadata = {
+  metadataBase,
   title: "Bao's Portfolio",
   description: "Bao Chua's portfolio reimagined inside a playful Wii U-inspired interface.",
 };
