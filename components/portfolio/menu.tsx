@@ -148,13 +148,8 @@ function AppIcon({
             initial={{ rotate: 0, scale: 1 }}
             animate={isHovered || isSelected ? { rotate: [0, -8, 8, -8, 0], scale: 1.08 } : { rotate: 0, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className={`flex items-center justify-center rounded-[1.3rem] border border-white/20 shadow-[0_10px_24px_rgba(0,0,0,0.24)] backdrop-blur-md ${
-              hasArtwork
-                ? "h-[3.25rem] w-[3.25rem] bg-black/28 md:h-[3.75rem] md:w-[3.75rem]"
-                : "h-[3.75rem] w-[3.75rem] bg-white/12 md:h-[4.25rem] md:w-[4.25rem]"
-            }`}
           >
-            <app.icon className={`text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.3)] ${hasArtwork ? "h-6 w-6 md:h-7 md:w-7" : "h-8 w-8 md:h-10 md:w-10"}`} />
+            <app.icon className={`text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.3)] ${hasArtwork ? "h-8 w-8 md:h-9 md:w-9" : "h-10 w-10 md:h-12 md:w-12"}`} />
           </motion.div>
 
           <span
