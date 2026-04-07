@@ -7,6 +7,17 @@ import { motion } from "motion/react";
 import { MII_DATA } from "@/components/portfolio/data";
 import type { AppId, Project, ResourceLink } from "@/components/portfolio/types";
 
+function getExternalLinkProps(href: string) {
+  if (href.startsWith("mailto:")) {
+    return {};
+  }
+
+  return {
+    target: "_blank",
+    rel: "noreferrer",
+  } as const;
+}
+
 export function WaraWaraPlaza() {
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-40">
@@ -68,8 +79,7 @@ export function ExternalAction({
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noreferrer"
+      {...getExternalLinkProps(href)}
       className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black shadow-md transition-transform hover:-translate-y-0.5 ${className ?? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"}`}
     >
       <span>{label}</span>
@@ -149,7 +159,7 @@ function ResourcePrimaryAction({
   }
 
   return (
-    <a href={resource.href} target="_blank" rel="noreferrer" className={`flex min-w-0 flex-1 items-start gap-3 sm:gap-4 ${compact ? "items-center" : ""}`}>
+    <a href={resource.href} {...getExternalLinkProps(resource.href)} className={`flex min-w-0 flex-1 items-start gap-3 sm:gap-4 ${compact ? "items-center" : ""}`}>
       {content}
     </a>
   );
@@ -159,8 +169,7 @@ function ResourceExternalButton({ href }: { href: string }) {
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noreferrer"
+      {...getExternalLinkProps(href)}
       aria-label="Open external link in new tab"
       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-500 dark:hover:bg-gray-600"
     >

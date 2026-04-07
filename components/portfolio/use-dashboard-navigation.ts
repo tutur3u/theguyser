@@ -2,13 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MENU_ITEMS } from "@/components/portfolio/data";
-import type { ScreenId } from "@/components/portfolio/types";
+import type { MenuItem, MenuItemId } from "@/components/portfolio/types";
 
 type Direction = "up" | "down" | "left" | "right";
 
+function getMenuItemId(item: MenuItem): MenuItemId {
+  return item.kind === "panel" ? item.id : item.menuId;
+}
+
 export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
-  const [selectedMenuId, setSelectedMenuId] = useState<ScreenId | null>(null);
-  const menuButtonRefs = useRef<Map<ScreenId, HTMLButtonElement>>(new Map());
+  const [selectedMenuId, setSelectedMenuId] = useState<MenuItemId | null>(null);
+  const menuButtonRefs = useRef<Map<MenuItemId, HTMLElement>>(new Map());
 
   useEffect(() => {
     if (!selectedMenuId || disabled) {
@@ -23,7 +27,7 @@ export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
       return;
     }
 
-    const getDirectionalCandidate = (currentId: ScreenId, direction: Direction) => {
+    const getDirectionalCandidate = (currentId: MenuItemId, direction: Direction) => {
       const currentButton = menuButtonRefs.current.get(currentId);
 
       if (!currentButton) {
@@ -34,7 +38,7 @@ export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
       const currentCenterX = currentRect.left + currentRect.width / 2;
       const currentCenterY = currentRect.top + currentRect.height / 2;
 
-      let nextId: ScreenId | null = null;
+      let nextId: MenuItemId | null = null;
       let bestScore = Number.POSITIVE_INFINITY;
 
       for (const [candidateId, candidateButton] of menuButtonRefs.current.entries()) {
@@ -108,7 +112,7 @@ export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
       event.preventDefault();
 
       if (!selectedMenuId) {
-        setSelectedMenuId(MENU_ITEMS[0]?.id ?? null);
+        setSelectedMenuId(MENU_ITEMS[0] ? getMenuItemId(MENU_ITEMS[0]) : null);
         return;
       }
 
@@ -123,7 +127,7 @@ export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
     return () => window.removeEventListener("keydown", handleMenuKeyDown);
   }, [disabled, selectedMenuId]);
 
-  const setMenuButtonRef = (id: ScreenId) => (node: HTMLButtonElement | null) => {
+  const setMenuButtonRef = (id: MenuItemId) => (node: HTMLElement | null) => {
     if (node) {
       menuButtonRefs.current.set(id, node);
       return;

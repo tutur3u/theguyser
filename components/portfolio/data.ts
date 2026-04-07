@@ -4,18 +4,16 @@ import {
   Briefcase,
   FileText,
   Gamepad2,
-  Globe,
   Image as ImageIcon,
   Mail,
   MessageSquare,
   Music,
   Settings,
-  ShoppingBag,
   Star,
   User,
   Users,
 } from "lucide-react";
-import type { AppDefinition, FocusArea, Project, ResourceLink } from "@/components/portfolio/types";
+import type { AppDefinition, MenuItem, Project, ResourceLink, FocusArea } from "@/components/portfolio/types";
 
 export const RESUME_VIEW_URL = "https://drive.google.com/file/d/1OTN2-CsjFnjOplfzHjHq1yCXJcqRWDtc/view?usp=drive_link";
 export const RESUME_PREVIEW_URL = "https://drive.google.com/file/d/1OTN2-CsjFnjOplfzHjHq1yCXJcqRWDtc/preview";
@@ -36,7 +34,6 @@ export const PROFILE = {
   summary: "I've included my portfolio below, highlighting some of my works.",
   email: "bchua753@gmail.com",
   image: "https://baochua.carrd.co/assets/images/image01.jpg?v=4f0e4032",
-  site: "https://baochua.carrd.co/",
 };
 
 export const GAME_PROJECTS: Project[] = [
@@ -116,13 +113,12 @@ export const RESEARCH_PROJECTS: Project[] = [
 
 export const RESOURCE_LINKS: ResourceLink[] = [
   {
-    id: "resume",
-    label: "Resume",
-    note: "Open CV viewer",
-    href: RESUME_VIEW_URL,
-    appId: "github",
-    icon: FileText,
-    color: "from-sky-400 to-blue-600",
+    id: "email",
+    label: "Email",
+    note: PROFILE.email,
+    href: `mailto:${PROFILE.email}`,
+    icon: Mail,
+    color: "from-amber-300 to-orange-500",
   },
   {
     id: "linkedin",
@@ -133,28 +129,21 @@ export const RESOURCE_LINKS: ResourceLink[] = [
     color: "from-blue-500 to-indigo-700",
   },
   {
+    id: "resume",
+    label: "Resume",
+    note: "Open resume viewer",
+    href: RESUME_VIEW_URL,
+    icon: FileText,
+    color: "from-sky-400 to-blue-600",
+    appId: "resume",
+  },
+  {
     id: "itch",
     label: "Itch.io",
     note: "Playable builds and portfolio hub",
     href: "https://theguyser.itch.io/",
     icon: Gamepad2,
     color: "from-fuchsia-400 to-pink-600",
-  },
-  {
-    id: "email",
-    label: "Email",
-    note: PROFILE.email,
-    href: `mailto:${PROFILE.email}`,
-    icon: Mail,
-    color: "from-amber-300 to-orange-500",
-  },
-  {
-    id: "carrd",
-    label: "Original Carrd",
-    note: "Source portfolio reference",
-    href: PROFILE.site,
-    icon: Globe,
-    color: "from-cyan-300 to-sky-600",
   },
 ];
 
@@ -214,13 +203,15 @@ export const SHOWREEL_ITEMS = [
 
 export const APPS: AppDefinition[] = [
   {
+    kind: "panel",
     id: "about",
     title: "Profile",
     icon: User,
     color: "bg-gradient-to-b from-[#4ade80] to-[#16a34a]",
-    size: "col-span-1 row-span-1",
+    size: "col-span-2 row-span-1",
   },
   {
+    kind: "panel",
     id: "skills",
     title: "Settings",
     icon: Settings,
@@ -228,20 +219,23 @@ export const APPS: AppDefinition[] = [
     size: "col-span-1 row-span-1",
   },
   {
-    id: "browser",
-    title: "Links",
-    icon: Globe,
-    color: "bg-gradient-to-b from-[#67e8f9] to-[#0891b2]",
-    size: "col-span-1 row-span-1",
-  },
-  {
+    kind: "panel",
     id: "contact",
-    title: "Contact",
+    title: "Connect",
     icon: Mail,
     color: "bg-gradient-to-b from-[#fde047] to-[#ca8a04]",
     size: "col-span-1 row-span-1",
   },
   {
+    kind: "panel",
+    id: "resume",
+    title: "Resume",
+    icon: FileText,
+    color: "bg-gradient-to-b from-[#374151] to-[#111827]",
+    size: "col-span-1 row-span-1",
+  },
+  {
+    kind: "panel",
     id: "experience",
     title: "Games",
     icon: Briefcase,
@@ -250,6 +244,7 @@ export const APPS: AppDefinition[] = [
     artwork: GAME_PROJECTS.map((project) => project.image),
   },
   {
+    kind: "panel",
     id: "miiverse",
     title: "Research",
     icon: MessageSquare,
@@ -258,6 +253,7 @@ export const APPS: AppDefinition[] = [
     artwork: RESEARCH_PROJECTS.map((project) => project.image),
   },
   {
+    kind: "panel",
     id: "awards",
     title: "Focus",
     icon: Award,
@@ -265,6 +261,7 @@ export const APPS: AppDefinition[] = [
     size: "col-span-1 row-span-1",
   },
   {
+    kind: "panel",
     id: "gallery",
     title: "Showcase",
     icon: ImageIcon,
@@ -273,36 +270,17 @@ export const APPS: AppDefinition[] = [
     artwork: [...GAME_PROJECTS, ...RESEARCH_PROJECTS].map((project) => project.image),
   },
   {
+    kind: "panel",
     id: "music",
     title: "Showreel",
     icon: Music,
     color: "bg-gradient-to-b from-[#2dd4bf] to-[#0d9488]",
     size: "col-span-1 row-span-1",
   },
-  {
-    id: "github",
-    title: "Resume",
-    icon: FileText,
-    color: "bg-gradient-to-b from-[#374151] to-[#111827]",
-    size: "col-span-1 row-span-1",
-  },
-  {
-    id: "friends",
-    title: "Network",
-    icon: Users,
-    color: "bg-gradient-to-b from-[#fdba74] to-[#ea580c]",
-    size: "col-span-1 row-span-1",
-  },
-  {
-    id: "eshop",
-    title: "Portfolio Kit",
-    icon: ShoppingBag,
-    color: "bg-gradient-to-b from-[#fca5a5] to-[#dc2626]",
-    size: "col-span-1 row-span-1",
-  },
 ];
 
 export const DISC_APP: AppDefinition = {
+  kind: "panel",
   id: "disc",
   title: "Bao's Portfolio",
   icon: Gamepad2,
@@ -310,7 +288,18 @@ export const DISC_APP: AppDefinition = {
   size: "col-span-2 row-span-2",
 };
 
-export const MENU_ITEMS: AppDefinition[] = [DISC_APP, ...APPS];
+export const MENU_ITEMS: MenuItem[] = [
+  DISC_APP,
+  APPS.find((app) => app.id === "about")!,
+  APPS.find((app) => app.id === "skills")!,
+  APPS.find((app) => app.id === "contact")!,
+  APPS.find((app) => app.id === "resume")!,
+  APPS.find((app) => app.id === "experience")!,
+  APPS.find((app) => app.id === "music")!,
+  APPS.find((app) => app.id === "miiverse")!,
+  APPS.find((app) => app.id === "awards")!,
+  APPS.find((app) => app.id === "gallery")!,
+];
 
 export const MII_DATA = [
   { id: 1, y: 10, delay: 0, duration: 20, scale: 0.8 },

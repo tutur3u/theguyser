@@ -165,7 +165,12 @@ export default function PortfolioPage() {
       <PortfolioHeader isDark={resolvedTheme === "dark"} mounted={themeReady} onThemeToggle={handleThemeToggle} time={time} />
 
       <div className="z-10 flex flex-1 items-start justify-center px-4 pb-12 pt-6 sm:px-5 sm:pb-16 sm:pt-8 md:items-center md:px-8 md:pb-24 md:pt-8">
-        <DashboardMenu onAppClick={handleAppClick} selectedMenuId={selectedMenuId} setMenuButtonRef={setMenuButtonRef} />
+        <DashboardMenu
+          onAppClick={handleAppClick}
+          selectedMenuId={selectedMenuId}
+          setMenuButtonRef={setMenuButtonRef}
+          setSelectedMenuId={setSelectedMenuId}
+        />
       </div>
 
       <PortfolioFooter />

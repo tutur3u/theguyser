@@ -3,22 +3,21 @@ import type { LucideIcon } from "lucide-react";
 export type AppId =
   | "about"
   | "skills"
-  | "browser"
   | "contact"
+  | "resume"
   | "experience"
   | "miiverse"
   | "awards"
   | "gallery"
-  | "music"
-  | "github"
-  | "friends"
-  | "eshop";
+  | "music";
 
 export type ScreenId = AppId | "disc";
+export type MenuItemId = ScreenId | "email-shortcut" | "linkedin-shortcut";
 
 export type ThemeMode = "light" | "dark" | "system";
 
 export type AppDefinition = {
+  kind: "panel";
   id: ScreenId;
   title: string;
   icon: LucideIcon;
@@ -26,6 +25,19 @@ export type AppDefinition = {
   size: string;
   artwork?: string[];
 };
+
+export type ExternalMenuItem = {
+  kind: "external";
+  menuId: MenuItemId;
+  title: string;
+  icon: LucideIcon;
+  color: string;
+  size: string;
+  href: string;
+  artwork?: string[];
+};
+
+export type MenuItem = AppDefinition | ExternalMenuItem;
 
 export type Project = {
   id: string;

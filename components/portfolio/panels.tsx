@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Globe, Mail, Moon, Music, Search, Settings, ShoppingBag, Sun } from "lucide-react";
+import { FileText, Mail, Moon, Music, Settings, Sun } from "lucide-react";
 import { motion } from "motion/react";
 import {
   DEFAULT_LAUNCH_ANIMATION_DURATION,
@@ -16,13 +16,7 @@ import {
   RESUME_VIEW_URL,
   SHOWREEL_ITEMS,
 } from "@/components/portfolio/data";
-import {
-  ExternalAction,
-  ProfileAvatar,
-  ProjectCard,
-  ResourceGrid,
-  ResourceRows,
-} from "@/components/portfolio/common";
+import { ExternalAction, ProfileAvatar, ProjectCard, ResourceGrid } from "@/components/portfolio/common";
 import type { AppRenderOptions, ScreenId, ThemeMode } from "@/components/portfolio/types";
 
 function StatCard({
@@ -161,45 +155,39 @@ export function PortfolioPanels({
               <p className="mb-3 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{PROFILE.intro}</p>
               <p className="mb-6 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{PROFILE.summary}</p>
 
-              <div className="mb-6 flex flex-wrap gap-3">
-                <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-black text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                  RMIT Vietnam
-                </span>
-                <span className="rounded-full bg-sky-100 px-4 py-2 text-sm font-black text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
-                  Game Design Program
-                </span>
-                <span className="rounded-full bg-purple-100 px-4 py-2 text-sm font-black text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                  Portfolio Source: Carrd
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => onLaunchApp("experience")}
-                  className="rounded-full bg-green-500 px-5 py-3 text-sm font-black text-white shadow-md transition-transform hover:-translate-y-0.5"
-                >
-                  Open Games
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onLaunchApp("miiverse")}
-                  className="rounded-full bg-blue-500 px-5 py-3 text-sm font-black text-white shadow-md transition-transform hover:-translate-y-0.5"
-                >
-                  Open Research
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onLaunchApp("contact")}
-                  className="rounded-full bg-yellow-400 px-5 py-3 text-sm font-black text-yellow-900 shadow-md transition-transform hover:-translate-y-0.5"
-                >
-                  Contact Info
-                </button>
+              <div className="mb-6 rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
+                <p className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Background</p>
+                <div className="mt-3 space-y-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+                  <p>RMIT Vietnam</p>
+                  <p>Game Design Program graduate</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <ResourceGrid resources={RESOURCE_LINKS} onOpenApp={onLaunchApp} />
+          <div className="grid gap-4 md:grid-cols-3">
+            <QuickLaunchCard
+              accent="from-green-50 to-green-100 text-green-500 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300"
+              label="Games"
+              title="Playable Works"
+              description="Visual novel, FPS, puzzle, and first-person puzzle projects."
+              onClick={() => onLaunchApp("experience")}
+            />
+            <QuickLaunchCard
+              accent="from-blue-50 to-blue-100 text-blue-500 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300"
+              label="Research"
+              title="Archives And Studies"
+              description="Console culture, grotesque studies, and the R4 video essay."
+              onClick={() => onLaunchApp("miiverse")}
+            />
+            <QuickLaunchCard
+              accent="from-amber-50 to-amber-100 text-amber-600 dark:from-amber-900/20 dark:to-amber-800/20 dark:text-amber-300"
+              label="Connect"
+              title="Resume And Links"
+              description="Email, LinkedIn, resume access, and Itch.io in one place."
+              onClick={() => onLaunchApp("contact")}
+            />
+          </div>
         </div>
       );
     case "skills":
@@ -387,89 +375,12 @@ export function PortfolioPanels({
                   onClick={() => onLaunchApp("miiverse")}
                 />
                 <QuickLaunchCard
-                  accent="from-orange-50 to-orange-100 text-orange-500 dark:from-orange-900/20 dark:to-orange-800/20 dark:text-orange-300"
-                  label="Resume"
-                  title="Open CV Viewer"
-                  description="Read the CV directly inside the tablet frame."
-                  onClick={() => onLaunchApp("github")}
+                  accent="from-amber-50 to-amber-100 text-amber-600 dark:from-amber-900/20 dark:to-amber-800/20 dark:text-amber-300"
+                  label="Connect"
+                  title="Resume And Links"
+                  description="Open the central hub for email, LinkedIn, resume, and Itch.io."
+                  onClick={() => onLaunchApp("contact")}
                 />
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    case "browser":
-      return (
-        <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-gray-200 bg-gray-100 p-2.5 dark:border-gray-700 dark:bg-gray-900 sm:gap-4 sm:p-3">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white font-bold text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-              >
-                &lt;
-              </button>
-              <button
-                type="button"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white font-bold text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-              >
-                &gt;
-              </button>
-            </div>
-            <div className="flex min-w-0 items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800 sm:px-4">
-              <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <div
-                className="min-w-0 flex-1 truncate whitespace-nowrap text-sm font-medium text-gray-600 dark:text-gray-300"
-                aria-label={`Address bar: ${PROFILE.site}`}
-              >
-                {PROFILE.site}
-              </div>
-            </div>
-            <a
-              href={PROFILE.site}
-              target="_blank"
-              rel="noreferrer"
-              className="shrink-0 rounded-full bg-cyan-500 px-3 py-1.5 text-center text-sm font-bold text-white transition-colors hover:bg-cyan-600 sm:min-w-[6.5rem] sm:px-4"
-            >
-              Open
-            </a>
-          </div>
-
-          <div className="grid flex-1 gap-6 overflow-y-auto bg-gray-50 p-4 dark:bg-gray-800/50 sm:p-6 md:grid-cols-2">
-            <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <Search className="h-6 w-6 text-cyan-500 dark:text-cyan-300" />
-                <h3 className="text-lg font-black text-gray-800 dark:text-gray-100 sm:text-xl">Portfolio Bookmarks</h3>
-              </div>
-              <ResourceRows resources={RESOURCE_LINKS} onOpenApp={onLaunchApp} />
-            </div>
-
-            <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <Globe className="h-6 w-6 text-blue-500 dark:text-blue-300" />
-                <h3 className="text-lg font-black text-gray-800 dark:text-gray-100 sm:text-xl">Browse Inside The Console</h3>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: "Open Games", note: `${GAME_PROJECTS.length} playable projects`, appId: "experience" as const },
-                  { label: "Open Research", note: `${RESEARCH_PROJECTS.length} research projects`, appId: "miiverse" as const },
-                  { label: "Open Showcase", note: "Project art and cover images", appId: "gallery" as const },
-                  { label: "Open Contact", note: "Email, LinkedIn, resume, Itch.io", appId: "contact" as const },
-                  { label: "Open CV Viewer", note: "Read the CV in the tablet frame", appId: "github" as const },
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => onLaunchApp(item.appId)}
-                    className="flex w-full flex-col items-start gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-950 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-black text-gray-800 dark:text-gray-100">{item.label}</div>
-                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{item.note}</div>
-                    </div>
-                    <span className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-black text-white">Open</span>
-                  </button>
-                ))}
               </div>
             </div>
           </div>
@@ -478,15 +389,77 @@ export function PortfolioPanels({
     case "contact":
       return (
         <div className="mx-auto max-w-3xl space-y-6 sm:space-y-7">
-          <div className="rounded-[2rem] border border-gray-100 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
-            <Mail className="mx-auto mb-4 h-16 w-16 text-yellow-400" />
-            <h3 className="text-3xl font-black text-gray-800 dark:text-gray-100">Contact Information</h3>
-            <p className="mt-3 text-lg text-gray-500 dark:text-gray-400">
-              Email, resume, LinkedIn, Itch.io, and the original Carrd portfolio.
-            </p>
-          </div>
+          <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
+            <div className="mb-5 flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-300">
+                <Mail className="h-7 w-7" />
+              </div>
+              <div>
+                <h3 className="text-3xl font-black text-gray-800 dark:text-gray-100">Connect</h3>
+                <p className="mt-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Resume access and the fastest ways to reach or follow Bao.
+                </p>
+              </div>
+            </div>
 
-          <ResourceGrid resources={RESOURCE_LINKS} onOpenApp={onLaunchApp} />
+            <ResourceGrid resources={RESOURCE_LINKS} onOpenApp={onLaunchApp} />
+          </div>
+        </div>
+      );
+    case "resume":
+      return (
+        <div className="mx-auto flex h-full min-h-0 max-w-6xl flex-col gap-6">
+          <div className="grid gap-4 md:h-full md:min-h-0 md:grid-cols-[320px_minmax(0,1fr)]">
+            <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8 md:h-full">
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
+                <FileText className="h-12 w-12 text-gray-800 dark:text-gray-200" />
+              </div>
+              <h3 className="mb-2 text-center text-2xl font-black text-gray-800 dark:text-gray-100">Resume</h3>
+              <p className="mb-6 text-center text-gray-500 dark:text-gray-400">{PROFILE.name}</p>
+
+              <div className="mb-8 grid grid-cols-2 gap-4">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
+                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{GAME_PROJECTS.length}</div>
+                  <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Games</div>
+                </div>
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
+                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{RESEARCH_PROJECTS.length}</div>
+                  <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Research</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <ExternalAction
+                  href={RESUME_VIEW_URL}
+                  label="Open In New Tab"
+                  className="w-full bg-gray-900 py-4 text-white dark:bg-gray-100 dark:text-gray-900"
+                />
+                <button
+                  type="button"
+                  onClick={() => onLaunchApp("contact")}
+                  className="w-full rounded-xl bg-sky-500 py-4 text-sm font-black text-white shadow-md transition-colors hover:bg-sky-600"
+                >
+                  Open Connect
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:flex md:min-h-0 md:flex-col">
+              <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Embedded PDF</div>
+                <div className="mt-1 text-2xl font-black text-gray-800 dark:text-gray-100">Bao Chua CV</div>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  In-app Google Drive preview. If it fails to load, use the external open button.
+                </p>
+              </div>
+              <iframe
+                src={RESUME_PREVIEW_URL}
+                title="Bao Chua CV preview"
+                className="h-[60vh] w-full bg-gray-100 dark:bg-gray-900 md:h-full md:min-h-0 md:flex-1"
+                allow="autoplay"
+              />
+            </div>
+          </div>
         </div>
       );
     case "experience":
@@ -590,113 +563,6 @@ export function PortfolioPanels({
                 <Music className="h-5 w-5 text-teal-400 dark:text-teal-500" />
               </div>
             ))}
-          </div>
-        </div>
-      );
-    case "github":
-      return (
-        <div className="mx-auto flex h-full max-w-6xl flex-col gap-6">
-          <div className="grid gap-4 md:grid-cols-[320px_1fr]">
-            <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
-                <FileText className="h-12 w-12 text-gray-800 dark:text-gray-200" />
-              </div>
-              <h3 className="mb-2 text-center text-2xl font-black text-gray-800 dark:text-gray-100">CV Viewer</h3>
-              <p className="mb-6 text-center text-gray-500 dark:text-gray-400">{PROFILE.name}</p>
-
-              <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
-                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{GAME_PROJECTS.length}</div>
-                  <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Games</div>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
-                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{RESEARCH_PROJECTS.length}</div>
-                  <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Research</div>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
-                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{RESOURCE_LINKS.length}</div>
-                  <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Links</div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <ExternalAction
-                  href={RESUME_VIEW_URL}
-                  label="Open In New Tab"
-                  className="w-full bg-gray-900 py-4 text-white dark:bg-gray-100 dark:text-gray-900"
-                />
-                <button
-                  type="button"
-                  onClick={() => onLaunchApp("contact")}
-                  className="w-full rounded-xl bg-sky-500 py-4 text-sm font-black text-white shadow-md transition-colors hover:bg-sky-600"
-                >
-                  Contact And Links
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Embedded PDF</div>
-                <div className="mt-1 text-2xl font-black text-gray-800 dark:text-gray-100">Bao Chua CV</div>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  In-browser Google Drive preview. If it fails to load, use the external open button.
-                </p>
-              </div>
-              <iframe
-                src={RESUME_PREVIEW_URL}
-                title="Bao Chua CV preview"
-                className="h-[60vh] w-full bg-gray-100 dark:bg-gray-900 sm:h-[70vh]"
-                allow="autoplay"
-              />
-            </div>
-          </div>
-        </div>
-      );
-    case "friends":
-      return (
-        <div className="mx-auto max-w-2xl overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex items-center justify-between bg-orange-500 p-4 text-lg font-bold text-white">
-            <span>Network</span>
-            <span className="rounded-full bg-orange-600 px-3 py-1 text-sm">{RESOURCE_LINKS.length} Channels</span>
-          </div>
-          <div className="p-4">
-            <ResourceRows resources={RESOURCE_LINKS} onOpenApp={onLaunchApp} />
-          </div>
-        </div>
-      );
-    case "eshop":
-      return (
-        <div className="mx-auto max-w-2xl rounded-3xl border-4 border-orange-100 bg-white p-5 text-center shadow-lg dark:border-orange-900 dark:bg-gray-800 sm:p-8">
-          <ShoppingBag className="mx-auto mb-4 h-20 w-20 text-orange-500" />
-          <h2 className="mb-2 text-3xl font-black text-gray-800 dark:text-gray-100 sm:text-4xl">Portfolio Kit</h2>
-          <p className="mb-8 text-lg text-gray-600 dark:text-gray-300 sm:text-xl">
-            Everything linked from Bao Chua&apos;s Carrd portfolio, packaged inside the current Wii U interface.
-          </p>
-          <div className="mb-8 rounded-2xl bg-orange-50 p-6 dark:bg-orange-900/30">
-            <div className="mb-4 flex items-center justify-between border-b border-orange-200 pb-4 dark:border-orange-800">
-              <span className="text-lg font-bold text-gray-700 dark:text-gray-200">Playable Games</span>
-              <span className="font-black text-orange-600 dark:text-orange-400">{GAME_PROJECTS.length}</span>
-            </div>
-            <div className="mb-4 flex items-center justify-between border-b border-orange-200 pb-4 dark:border-orange-800">
-              <span className="text-lg font-bold text-gray-700 dark:text-gray-200">Research Projects</span>
-              <span className="font-black text-orange-600 dark:text-orange-400">{RESEARCH_PROJECTS.length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-bold text-gray-700 dark:text-gray-200">External Resources</span>
-              <span className="font-black text-orange-600 dark:text-orange-400">{RESOURCE_LINKS.length}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <button
-              type="button"
-              onClick={() => onLaunchApp("github")}
-              className="rounded-full bg-gradient-to-r from-orange-400 to-orange-500 px-8 py-4 text-xl font-black text-white shadow-[0_6px_0_#c2410c] transition-all hover:translate-y-1 hover:shadow-[0_4px_0_#c2410c] active:translate-y-2 active:shadow-none sm:px-12 sm:text-2xl"
-            >
-              Open Resume
-            </button>
-            <ExternalAction href={RESUME_VIEW_URL} label="Open In New Tab" className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900" />
           </div>
         </div>
       );
