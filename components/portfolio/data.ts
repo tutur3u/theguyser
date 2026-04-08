@@ -240,7 +240,7 @@ export const APPS: AppDefinition[] = [
     title: "Games",
     icon: Briefcase,
     color: "bg-gradient-to-b from-[#a78bfa] to-[#7c3aed]",
-    size: "col-span-2 row-span-1",
+    size: "col-span-1 row-span-1 md:col-span-2 md:row-span-1",
     artwork: GAME_PROJECTS.map((project) => project.image),
   },
   {
@@ -249,7 +249,7 @@ export const APPS: AppDefinition[] = [
     title: "Research",
     icon: MessageSquare,
     color: "bg-gradient-to-b from-[#86efac] to-[#22c55e]",
-    size: "col-span-2 row-span-1",
+    size: "col-span-1 row-span-1 md:col-span-2 md:row-span-1",
     artwork: RESEARCH_PROJECTS.map((project) => project.image),
   },
   {
