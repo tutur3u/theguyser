@@ -2,7 +2,8 @@
 
 import { useEffect, type ReactNode } from "react";
 import Image from "next/image";
-import { BatteryFull, Wifi } from "lucide-react";
+import Link from "next/link";
+import { BatteryFull, ShieldCheck, Wifi } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { ThemeToggle } from "@/components/portfolio/common";
 import type { AppDefinition, PortfolioProfile } from "@/components/portfolio/types";
@@ -45,6 +46,15 @@ export function PortfolioHeader({
         <div className="flex shrink-0 items-center gap-2 text-sm font-bold text-gray-600 dark:text-gray-300 md:gap-6 md:text-base">
           <div className="flex items-center gap-2 md:gap-4">
             <ThemeToggle isDark={isDark} mounted={mounted} onToggle={onThemeToggle} />
+            <Link
+              href="/admin"
+              prefetch={false}
+              className="flex h-10 items-center justify-center gap-2 rounded-full border-2 border-gray-300 bg-gray-100 px-3 text-xs font-black text-gray-500 shadow-inner transition-colors hover:border-sky-300 hover:text-sky-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:border-sky-500 dark:hover:text-sky-300 md:h-12 md:px-4"
+              aria-label="Open admin dashboard"
+            >
+              <ShieldCheck className="h-4 w-4 md:h-5 md:w-5" />
+              <span className="hidden sm:inline">Admin</span>
+            </Link>
             <div className="hidden items-center gap-1 sm:flex">
               {[0, 1, 2, 3, 4].map((item) => (
                 <motion.div
