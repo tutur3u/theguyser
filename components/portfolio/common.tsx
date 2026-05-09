@@ -235,5 +235,15 @@ export function ProfileAvatar({
   image: string;
   size?: number;
 }) {
-  return <Image src={image} alt={alt} width={size} height={size} className="h-auto w-full object-cover" priority={size >= 200} />;
+  return (
+    <Image
+      src={image}
+      alt={alt}
+      width={size}
+      height={size}
+      className="h-auto w-full object-cover"
+      priority={size >= 200}
+      unoptimized={image.startsWith("/api/")}
+    />
+  );
 }

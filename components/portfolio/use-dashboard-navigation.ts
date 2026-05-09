@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MENU_ITEMS } from "@/components/portfolio/data";
 import type { MenuItem, MenuItemId } from "@/components/portfolio/types";
 
 type Direction = "up" | "down" | "left" | "right";
@@ -10,7 +9,13 @@ function getMenuItemId(item: MenuItem): MenuItemId {
   return item.kind === "panel" ? item.id : item.menuId;
 }
 
-export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
+export function useDashboardNavigation({
+  disabled,
+  menuItems,
+}: {
+  disabled: boolean;
+  menuItems: MenuItem[];
+}) {
   const [selectedMenuId, setSelectedMenuId] = useState<MenuItemId | null>(null);
   const menuButtonRefs = useRef<Map<MenuItemId, HTMLElement>>(new Map());
 
@@ -112,7 +117,7 @@ export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
       event.preventDefault();
 
       if (!selectedMenuId) {
-        setSelectedMenuId(MENU_ITEMS[0] ? getMenuItemId(MENU_ITEMS[0]) : null);
+        setSelectedMenuId(menuItems[0] ? getMenuItemId(menuItems[0]) : null);
         return;
       }
 
@@ -125,7 +130,7 @@ export function useDashboardNavigation({ disabled }: { disabled: boolean }) {
 
     window.addEventListener("keydown", handleMenuKeyDown);
     return () => window.removeEventListener("keydown", handleMenuKeyDown);
-  }, [disabled, selectedMenuId]);
+  }, [disabled, menuItems, selectedMenuId]);
 
   const setMenuButtonRef = (id: MenuItemId) => (node: HTMLElement | null) => {
     if (node) {

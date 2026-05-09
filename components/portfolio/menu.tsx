@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { DISC_APP, MENU_ITEMS, PROFILE } from "@/components/portfolio/data";
-import type { AppDefinition, MenuItem, MenuItemId } from "@/components/portfolio/types";
+import type { AppDefinition, MenuItem, MenuItemId, PortfolioProfile } from "@/components/portfolio/types";
 
 function getExternalLinkProps(href: string) {
   if (href.startsWith("mailto:")) {
@@ -21,13 +20,17 @@ function getMenuItemId(item: MenuItem): MenuItemId {
 }
 
 function DiscChannel({
+  app,
   buttonRef,
   isSelected,
   onClick,
+  profile,
 }: {
+  app: AppDefinition;
   buttonRef?: (node: HTMLElement | null) => void;
   isSelected: boolean;
   onClick: () => void;
+  profile: PortfolioProfile;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [hoverPulse, setHoverPulse] = useState(0);
@@ -47,13 +50,13 @@ function DiscChannel({
             ? "scale-[1.01] ring-4 ring-sky-300 ring-offset-4 ring-offset-transparent dark:ring-sky-500"
             : "focus-visible:ring-4 focus-visible:ring-sky-300 focus-visible:ring-offset-4 focus-visible:ring-offset-transparent dark:focus-visible:ring-sky-500"
         }`}
-        aria-label="Open Bao's Portfolio"
+        aria-label={`Open ${app.title}`}
       >
         <div
           className={`absolute inset-0 bg-cover bg-center transition-transform duration-700 ${
             isHovered || isSelected ? "scale-[1.04] opacity-55" : "opacity-40"
           }`}
-          style={{ backgroundImage: `url("${PROFILE.image}")` }}
+          style={{ backgroundImage: `url("${profile.image}")` }}
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.12),rgba(15,23,42,0.22)_44%,rgba(15,23,42,0.62))]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.34),transparent_42%)]" />
@@ -67,7 +70,7 @@ function DiscChannel({
         >
           <div className="rounded-[1.5rem] bg-black/38 px-5 py-4 backdrop-blur-md">
             <span className="block text-lg leading-tight font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] md:text-[1.7rem]">
-              Bao&apos;s Portfolio
+              {app.title}
             </span>
           </div>
         </motion.div>
@@ -213,12 +216,18 @@ function AppIcon({
 }
 
 export function DashboardMenu({
+  discApp,
+  menuItems,
   onAppClick,
+  profile,
   selectedMenuId,
   setMenuButtonRef,
   setSelectedMenuId,
 }: {
+  discApp: AppDefinition;
+  menuItems: MenuItem[];
   onAppClick: (app: AppDefinition) => void;
+  profile: PortfolioProfile;
   selectedMenuId: MenuItemId | null;
   setMenuButtonRef: (id: MenuItemId) => (node: HTMLElement | null) => void;
   setSelectedMenuId: (id: MenuItemId | null) => void;
@@ -229,11 +238,13 @@ export function DashboardMenu({
       aria-label="Portfolio apps menu"
     >
       <DiscChannel
-        buttonRef={setMenuButtonRef(DISC_APP.id)}
-        isSelected={selectedMenuId === DISC_APP.id}
-        onClick={() => onAppClick(DISC_APP)}
+        app={discApp}
+        buttonRef={setMenuButtonRef(discApp.id)}
+        isSelected={selectedMenuId === discApp.id}
+        onClick={() => onAppClick(discApp)}
+        profile={profile}
       />
-      {MENU_ITEMS.filter((item) => item.kind !== "panel" || item.id !== DISC_APP.id).map((item) => (
+      {menuItems.filter((item) => item.kind !== "panel" || item.id !== discApp.id).map((item) => (
         <AppIcon
           key={getMenuItemId(item)}
           item={item}

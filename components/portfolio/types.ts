@@ -68,6 +68,24 @@ export type FocusArea = {
   bg: string;
 };
 
+export type PortfolioProfile = {
+  email: string;
+  image: string;
+  intro: string;
+  name: string;
+  role: string;
+  summary: string;
+};
+
+export type PortfolioContent = {
+  focusAreas: FocusArea[];
+  gameProjects: Project[];
+  profile: PortfolioProfile;
+  researchProjects: Project[];
+  resourceLinks: ResourceLink[];
+  showreelItems: string[];
+};
+
 export type AppRenderOptions = {
   launchAnimationEnabled: boolean;
   launchAnimationDuration: number;

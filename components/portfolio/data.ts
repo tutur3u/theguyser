@@ -13,7 +13,14 @@ import {
   User,
   Users,
 } from "lucide-react";
-import type { AppDefinition, MenuItem, Project, ResourceLink, FocusArea } from "@/components/portfolio/types";
+import type {
+  AppDefinition,
+  FocusArea,
+  MenuItem,
+  PortfolioContent,
+  Project,
+  ResourceLink,
+} from "@/components/portfolio/types";
 
 export const RESUME_VIEW_URL = "https://drive.google.com/file/d/1OTN2-CsjFnjOplfzHjHq1yCXJcqRWDtc/view?usp=drive_link";
 export const RESUME_PREVIEW_URL = "https://drive.google.com/file/d/1OTN2-CsjFnjOplfzHjHq1yCXJcqRWDtc/preview";
@@ -201,105 +208,131 @@ export const SHOWREEL_ITEMS = [
   "Research Zine: Grotesque in Games",
 ];
 
-export const APPS: AppDefinition[] = [
-  {
-    kind: "panel",
-    id: "about",
-    title: "Profile",
-    icon: User,
-    color: "bg-gradient-to-b from-[#4ade80] to-[#16a34a]",
-    size: "col-span-2 row-span-1",
-  },
-  {
-    kind: "panel",
-    id: "skills",
-    title: "Settings",
-    icon: Settings,
-    color: "bg-gradient-to-b from-[#9ca3af] to-[#4b5563]",
-    size: "col-span-1 row-span-1",
-  },
-  {
-    kind: "panel",
-    id: "contact",
-    title: "Connect",
-    icon: Mail,
-    color: "bg-gradient-to-b from-[#fde047] to-[#ca8a04]",
-    size: "col-span-1 row-span-1",
-  },
-  {
-    kind: "panel",
-    id: "resume",
-    title: "Resume",
-    icon: FileText,
-    color: "bg-gradient-to-b from-[#374151] to-[#111827]",
-    size: "col-span-1 row-span-1",
-  },
-  {
-    kind: "panel",
-    id: "experience",
-    title: "Games",
-    icon: Briefcase,
-    color: "bg-gradient-to-b from-[#a78bfa] to-[#7c3aed]",
-    size: "col-span-1 row-span-1 md:col-span-2 md:row-span-1",
-    artwork: GAME_PROJECTS.map((project) => project.image),
-  },
-  {
-    kind: "panel",
-    id: "miiverse",
-    title: "Research",
-    icon: MessageSquare,
-    color: "bg-gradient-to-b from-[#86efac] to-[#22c55e]",
-    size: "col-span-1 row-span-1 md:col-span-2 md:row-span-1",
-    artwork: RESEARCH_PROJECTS.map((project) => project.image),
-  },
-  {
-    kind: "panel",
-    id: "awards",
-    title: "Focus",
-    icon: Award,
-    color: "bg-gradient-to-b from-[#fb923c] to-[#ea580c]",
-    size: "col-span-1 row-span-1",
-  },
-  {
-    kind: "panel",
-    id: "gallery",
-    title: "Showcase",
-    icon: ImageIcon,
-    color: "bg-gradient-to-b from-[#f472b6] to-[#db2777]",
-    size: "col-span-1 row-span-1",
-    artwork: [...GAME_PROJECTS, ...RESEARCH_PROJECTS].map((project) => project.image),
-  },
-  {
-    kind: "panel",
-    id: "music",
-    title: "Showreel",
-    icon: Music,
-    color: "bg-gradient-to-b from-[#2dd4bf] to-[#0d9488]",
-    size: "col-span-1 row-span-1",
-  },
-];
-
-export const DISC_APP: AppDefinition = {
-  kind: "panel",
-  id: "disc",
-  title: "Bao's Portfolio",
-  icon: Gamepad2,
-  color: "bg-blue-500",
-  size: "col-span-2 row-span-2",
+export const DEFAULT_PORTFOLIO_CONTENT: PortfolioContent = {
+  focusAreas: FOCUS_AREAS,
+  gameProjects: GAME_PROJECTS,
+  profile: PROFILE,
+  researchProjects: RESEARCH_PROJECTS,
+  resourceLinks: RESOURCE_LINKS,
+  showreelItems: SHOWREEL_ITEMS,
 };
 
-export const MENU_ITEMS: MenuItem[] = [
-  DISC_APP,
-  APPS.find((app) => app.id === "about")!,
-  APPS.find((app) => app.id === "skills")!,
-  APPS.find((app) => app.id === "contact")!,
-  APPS.find((app) => app.id === "resume")!,
-  APPS.find((app) => app.id === "experience")!,
-  APPS.find((app) => app.id === "music")!,
-  APPS.find((app) => app.id === "miiverse")!,
-  APPS.find((app) => app.id === "awards")!,
-  APPS.find((app) => app.id === "gallery")!,
-];
+export function getPortfolioApps(content: PortfolioContent): AppDefinition[] {
+  return [
+    {
+      kind: "panel",
+      id: "about",
+      title: "Profile",
+      icon: User,
+      color: "bg-gradient-to-b from-[#4ade80] to-[#16a34a]",
+      size: "col-span-2 row-span-1",
+    },
+    {
+      kind: "panel",
+      id: "skills",
+      title: "Settings",
+      icon: Settings,
+      color: "bg-gradient-to-b from-[#9ca3af] to-[#4b5563]",
+      size: "col-span-1 row-span-1",
+    },
+    {
+      kind: "panel",
+      id: "contact",
+      title: "Connect",
+      icon: Mail,
+      color: "bg-gradient-to-b from-[#fde047] to-[#ca8a04]",
+      size: "col-span-1 row-span-1",
+    },
+    {
+      kind: "panel",
+      id: "resume",
+      title: "Resume",
+      icon: FileText,
+      color: "bg-gradient-to-b from-[#374151] to-[#111827]",
+      size: "col-span-1 row-span-1",
+    },
+    {
+      kind: "panel",
+      id: "experience",
+      title: "Games",
+      icon: Briefcase,
+      color: "bg-gradient-to-b from-[#a78bfa] to-[#7c3aed]",
+      size: "col-span-1 row-span-1 md:col-span-2 md:row-span-1",
+      artwork: content.gameProjects.map((project) => project.image),
+    },
+    {
+      kind: "panel",
+      id: "miiverse",
+      title: "Research",
+      icon: MessageSquare,
+      color: "bg-gradient-to-b from-[#86efac] to-[#22c55e]",
+      size: "col-span-1 row-span-1 md:col-span-2 md:row-span-1",
+      artwork: content.researchProjects.map((project) => project.image),
+    },
+    {
+      kind: "panel",
+      id: "awards",
+      title: "Focus",
+      icon: Award,
+      color: "bg-gradient-to-b from-[#fb923c] to-[#ea580c]",
+      size: "col-span-1 row-span-1",
+    },
+    {
+      kind: "panel",
+      id: "gallery",
+      title: "Showcase",
+      icon: ImageIcon,
+      color: "bg-gradient-to-b from-[#f472b6] to-[#db2777]",
+      size: "col-span-1 row-span-1",
+      artwork: [...content.gameProjects, ...content.researchProjects].map((project) => project.image),
+    },
+    {
+      kind: "panel",
+      id: "music",
+      title: "Showreel",
+      icon: Music,
+      color: "bg-gradient-to-b from-[#2dd4bf] to-[#0d9488]",
+      size: "col-span-1 row-span-1",
+    },
+  ];
+}
+
+export function getPortfolioDiscApp(content: PortfolioContent): AppDefinition {
+  const firstName = content.profile.name.trim().split(/\s+/)[0] || "Bao";
+
+  return {
+    kind: "panel",
+    id: "disc",
+    title: `${firstName}'s Portfolio`,
+    icon: Gamepad2,
+    color: "bg-blue-500",
+    size: "col-span-2 row-span-2",
+  };
+}
+
+export function getPortfolioMenuItems(content: PortfolioContent): MenuItem[] {
+  const apps = getPortfolioApps(content);
+  const discApp = getPortfolioDiscApp(content);
+
+  return [
+    discApp,
+    apps.find((app) => app.id === "about")!,
+    apps.find((app) => app.id === "skills")!,
+    apps.find((app) => app.id === "contact")!,
+    apps.find((app) => app.id === "resume")!,
+    apps.find((app) => app.id === "experience")!,
+    apps.find((app) => app.id === "music")!,
+    apps.find((app) => app.id === "miiverse")!,
+    apps.find((app) => app.id === "awards")!,
+    apps.find((app) => app.id === "gallery")!,
+  ];
+}
+
+export const APPS: AppDefinition[] = getPortfolioApps(DEFAULT_PORTFOLIO_CONTENT);
+
+export const DISC_APP: AppDefinition = getPortfolioDiscApp(DEFAULT_PORTFOLIO_CONTENT);
+
+export const MENU_ITEMS: MenuItem[] = getPortfolioMenuItems(DEFAULT_PORTFOLIO_CONTENT);
 
 export const MII_DATA = [
   { id: 1, y: 10, delay: 0, duration: 20, scale: 0.8 },

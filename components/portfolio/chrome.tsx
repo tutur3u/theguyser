@@ -4,19 +4,20 @@ import { useEffect, type ReactNode } from "react";
 import Image from "next/image";
 import { BatteryFull, Wifi } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { PROFILE } from "@/components/portfolio/data";
 import { ThemeToggle } from "@/components/portfolio/common";
-import type { AppDefinition } from "@/components/portfolio/types";
+import type { AppDefinition, PortfolioProfile } from "@/components/portfolio/types";
 
 export function PortfolioHeader({
   isDark,
   mounted,
   onThemeToggle,
+  profile,
   time,
 }: {
   isDark: boolean;
   mounted: boolean;
   onThemeToggle: () => void;
+  profile: PortfolioProfile;
   time: string;
 }) {
   return (
@@ -24,10 +25,17 @@ export function PortfolioHeader({
       <div className="flex items-center justify-between gap-3 md:gap-6">
         <div className="flex min-w-0 items-center gap-2.5 md:gap-4">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-gray-300 bg-gray-100 shadow-inner dark:border-gray-600 dark:bg-gray-800 md:h-12 md:w-12">
-            <Image src={PROFILE.image} alt="Bao Chua portrait" width={48} height={48} className="h-full w-full object-cover" />
+            <Image
+              src={profile.image}
+              alt={`${profile.name} portrait`}
+              width={48}
+              height={48}
+              className="h-full w-full object-cover"
+              unoptimized={profile.image.startsWith("/api/")}
+            />
           </div>
           <div className="min-w-0">
-            <span className="block truncate text-sm font-bold text-gray-700 dark:text-gray-200 md:text-base">{PROFILE.name}</span>
+            <span className="block truncate text-sm font-bold text-gray-700 dark:text-gray-200 md:text-base">{profile.name}</span>
             <span className="hidden text-[0.68rem] font-black tracking-[0.24em] text-sky-600 uppercase dark:text-sky-300 min-[380px]:block md:hidden">
               Portfolio Menu
             </span>
@@ -162,10 +170,12 @@ export function TabletDialog({
   activeApp,
   children,
   onClose,
+  profile,
 }: {
   activeApp: AppDefinition | null;
   children: ReactNode;
   onClose: () => void;
+  profile: PortfolioProfile;
 }) {
   useEffect(() => {
     if (!activeApp) {
@@ -270,7 +280,7 @@ export function TabletDialog({
               </div>
 
               <div className="border-b border-gray-200 bg-white/90 px-3 py-2 text-[0.62rem] font-bold tracking-[0.16em] text-gray-400 uppercase dark:border-gray-800 dark:bg-gray-950/80 dark:text-gray-500 sm:px-4 sm:text-xs">
-                {PROFILE.name} • {PROFILE.role}
+                {profile.name} • {profile.role}
               </div>
 
               <div className="wii-bg relative flex-1 overflow-y-auto p-3 sm:p-6 md:p-8">{children}</div>

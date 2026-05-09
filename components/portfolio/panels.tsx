@@ -5,19 +5,13 @@ import { motion } from "motion/react";
 import {
   DEFAULT_LAUNCH_ANIMATION_DURATION,
   EQUALIZER_DURATIONS,
-  FOCUS_AREAS,
   formatLaunchAnimationDuration,
-  GAME_PROJECTS,
   LAUNCH_ANIMATION_SPEED_OPTIONS,
-  PROFILE,
-  RESEARCH_PROJECTS,
-  RESOURCE_LINKS,
   RESUME_PREVIEW_URL,
   RESUME_VIEW_URL,
-  SHOWREEL_ITEMS,
 } from "@/components/portfolio/data";
 import { ExternalAction, ProfileAvatar, ProjectCard, ResourceGrid } from "@/components/portfolio/common";
-import type { AppRenderOptions, ScreenId, ThemeMode } from "@/components/portfolio/types";
+import type { AppRenderOptions, PortfolioContent, ScreenId, ThemeMode } from "@/components/portfolio/types";
 
 function StatCard({
   label,
@@ -95,6 +89,7 @@ function QuickLaunchCard({
 }
 
 export function PortfolioPanels({
+  content,
   id,
   options: {
     launchAnimationDuration,
@@ -109,9 +104,12 @@ export function PortfolioPanels({
     themeReady,
   },
 }: {
+  content: PortfolioContent;
   id: ScreenId;
   options: AppRenderOptions;
 }) {
+  const { focusAreas, gameProjects, profile, researchProjects, resourceLinks, showreelItems } = content;
+
   switch (id) {
     case "disc":
       return (
@@ -122,12 +120,12 @@ export function PortfolioPanels({
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="mb-8 w-full max-w-[17rem] overflow-hidden rounded-[2rem] border-4 border-white bg-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] dark:border-gray-900 dark:bg-gray-800"
           >
-            <ProfileAvatar alt="Bao Chua portrait" image={PROFILE.image} size={320} />
+            <ProfileAvatar alt={`${profile.name} portrait`} image={profile.image} size={320} />
           </motion.div>
-          <h2 className="mb-4 text-3xl font-black text-gray-800 dark:text-gray-100 sm:text-4xl">Bao&apos;s Portfolio</h2>
-          <p className="mb-3 text-base font-bold text-sky-600 dark:text-sky-300 sm:text-lg">{PROFILE.role}</p>
+          <h2 className="mb-4 text-3xl font-black text-gray-800 dark:text-gray-100 sm:text-4xl">{profile.name}&apos;s Portfolio</h2>
+          <p className="mb-3 text-base font-bold text-sky-600 dark:text-sky-300 sm:text-lg">{profile.role}</p>
           <p className="mb-8 max-w-2xl text-base text-gray-600 dark:text-gray-300 sm:text-lg">
-            {PROFILE.intro} {PROFILE.summary}
+            {profile.intro} {profile.summary}
           </p>
           <button
             type="button"
@@ -144,16 +142,16 @@ export function PortfolioPanels({
           <div className="grid gap-6 lg:grid-cols-[260px_1fr] lg:gap-7">
             <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-7">
               <div className="overflow-hidden rounded-[1.5rem] border-4 border-white shadow-lg dark:border-gray-900">
-                <ProfileAvatar alt="Bao Chua portrait" image={PROFILE.image} />
+                <ProfileAvatar alt={`${profile.name} portrait`} image={profile.image} />
               </div>
             </div>
 
             <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
               <p className="mb-2 text-sm font-black tracking-[0.35em] text-green-500 uppercase dark:text-green-300">Profile</p>
-              <h3 className="mb-2 text-3xl font-black text-gray-800 dark:text-gray-100">{PROFILE.name}</h3>
-              <p className="mb-5 text-xl font-bold text-gray-500 dark:text-gray-400">{PROFILE.role}</p>
-              <p className="mb-3 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{PROFILE.intro}</p>
-              <p className="mb-6 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{PROFILE.summary}</p>
+              <h3 className="mb-2 text-3xl font-black text-gray-800 dark:text-gray-100">{profile.name}</h3>
+              <p className="mb-5 text-xl font-bold text-gray-500 dark:text-gray-400">{profile.role}</p>
+              <p className="mb-3 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{profile.intro}</p>
+              <p className="mb-6 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{profile.summary}</p>
 
               <div className="mb-6 rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
                 <p className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Background</p>
@@ -196,13 +194,13 @@ export function PortfolioPanels({
           <div className="grid gap-4 md:grid-cols-3">
             <StatCard
               label="Games"
-              value={GAME_PROJECTS.length}
+              value={gameProjects.length}
               note="Playable projects"
               valueClassName="text-blue-500 dark:text-blue-300"
             />
             <StatCard
               label="Research"
-              value={RESEARCH_PROJECTS.length}
+              value={researchProjects.length}
               note="Research projects"
               valueClassName="text-green-500 dark:text-green-300"
             />
@@ -402,7 +400,7 @@ export function PortfolioPanels({
               </div>
             </div>
 
-            <ResourceGrid resources={RESOURCE_LINKS} onOpenApp={onLaunchApp} />
+            <ResourceGrid resources={resourceLinks} onOpenApp={onLaunchApp} />
           </div>
         </div>
       );
@@ -415,15 +413,15 @@ export function PortfolioPanels({
                 <FileText className="h-12 w-12 text-gray-800 dark:text-gray-200" />
               </div>
               <h3 className="mb-2 text-center text-2xl font-black text-gray-800 dark:text-gray-100">Resume</h3>
-              <p className="mb-6 text-center text-gray-500 dark:text-gray-400">{PROFILE.name}</p>
+              <p className="mb-6 text-center text-gray-500 dark:text-gray-400">{profile.name}</p>
 
               <div className="mb-8 grid grid-cols-2 gap-4">
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
-                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{GAME_PROJECTS.length}</div>
+                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{gameProjects.length}</div>
                   <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Games</div>
                 </div>
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-900">
-                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{RESEARCH_PROJECTS.length}</div>
+                  <div className="text-xl font-black text-gray-800 dark:text-gray-100">{researchProjects.length}</div>
                   <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Research</div>
                 </div>
               </div>
@@ -465,7 +463,7 @@ export function PortfolioPanels({
     case "experience":
       return (
         <div className="mx-auto max-w-4xl space-y-6 sm:space-y-7">
-          {GAME_PROJECTS.map((project) => (
+          {gameProjects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
@@ -473,7 +471,7 @@ export function PortfolioPanels({
     case "miiverse":
       return (
         <div className="mx-auto max-w-4xl space-y-6 sm:space-y-7">
-          {RESEARCH_PROJECTS.map((project) => (
+          {researchProjects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
@@ -481,7 +479,7 @@ export function PortfolioPanels({
     case "awards":
       return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
-          {FOCUS_AREAS.map((area) => (
+          {focusAreas.map((area) => (
             <div
               key={area.title}
               className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm transition-transform hover:scale-[1.02] dark:border-gray-700 dark:bg-gray-800"
@@ -498,7 +496,7 @@ export function PortfolioPanels({
     case "gallery":
       return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {[...GAME_PROJECTS, ...RESEARCH_PROJECTS].map((project) => (
+          {[...gameProjects, ...researchProjects].map((project) => (
             <a
               key={project.id}
               href={project.href}
@@ -549,7 +547,7 @@ export function PortfolioPanels({
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {SHOWREEL_ITEMS.map((item, index) => (
+            {showreelItems.map((item, index) => (
               <div
                 key={item}
                 className="flex items-center justify-between rounded-[1.5rem] border border-gray-100 bg-white px-5 py-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"

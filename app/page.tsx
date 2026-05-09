@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import {
-  APPS,
+  DEFAULT_PORTFOLIO_CONTENT,
   DEFAULT_LAUNCH_ANIMATION_DURATION,
   DEFAULT_LAUNCH_ANIMATION_ENABLED,
+  getPortfolioApps,
+  getPortfolioDiscApp,
+  getPortfolioMenuItems,
   LAUNCH_ANIMATION_SPEED_OPTIONS,
   LAUNCH_ANIMATION_STORAGE_KEY,
   PORTFOLIO_PREFERENCES_STORAGE_KEY,
@@ -15,7 +18,53 @@ import { PortfolioHeader, PortfolioFooter, LaunchOverlay, TabletDialog } from "@
 import { WaraWaraPlaza } from "@/components/portfolio/common";
 import { DashboardMenu } from "@/components/portfolio/menu";
 import { useDashboardNavigation } from "@/components/portfolio/use-dashboard-navigation";
-import type { AppDefinition, AppId, ThemeMode } from "@/components/portfolio/types";
+import type { AppDefinition, AppId, PortfolioContent, ResourceLink, ThemeMode } from "@/components/portfolio/types";
+
+type SerializableContentPayload = Partial<
+  Pick<PortfolioContent, "gameProjects" | "profile" | "researchProjects" | "showreelItems">
+> & {
+  resourceLinks?: Array<Omit<ResourceLink, "icon">>;
+};
+
+function mergeResourceLinks(
+  current: ResourceLink[],
+  incoming: Array<Omit<ResourceLink, "icon">> | undefined,
+) {
+  if (!incoming?.length) {
+    return current;
+  }
+
+  const incomingById = new Map(incoming.map((resource) => [resource.id, resource]));
+  const merged = current.map((fallback, index) => {
+    const resource = incomingById.get(fallback.id) ?? incoming[index];
+
+    if (!resource) {
+      return fallback;
+    }
+
+    incomingById.delete(resource.id);
+
+    return {
+      ...fallback,
+      ...resource,
+      icon: fallback.icon,
+    };
+  });
+
+  for (const resource of incomingById.values()) {
+    const fallback =
+      current.find((item) => item.id === resource.id) ??
+      DEFAULT_PORTFOLIO_CONTENT.resourceLinks[0];
+
+    merged.push({
+      ...fallback,
+      ...resource,
+      icon: fallback.icon,
+    });
+  }
+
+  return merged;
+}
 
 type PortfolioPreferences = {
   launchAnimationEnabled: boolean;
@@ -77,10 +126,8 @@ export default function PortfolioPage() {
   const [activeApp, setActiveApp] = useState<AppDefinition | null>(null);
   const [launchingApp, setLaunchingApp] = useState<AppDefinition | null>(null);
   const [preferences, setPreferences] = useState<PortfolioPreferences>(readInitialPreferences);
+  const [content, setContent] = useState<PortfolioContent>(DEFAULT_PORTFOLIO_CONTENT);
   const [time, setTime] = useState("");
-  const { selectedMenuId, setMenuButtonRef, setSelectedMenuId } = useDashboardNavigation({
-    disabled: activeApp !== null || launchingApp !== null,
-  });
   const themeReady = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -90,6 +137,56 @@ export default function PortfolioPage() {
   const themeMode: ThemeMode =
     theme === "light" || theme === "dark" || theme === "system" ? theme : "system";
   const { launchAnimationDuration, launchAnimationEnabled, rememberPreferences } = preferences;
+  const apps = useMemo(() => getPortfolioApps(content), [content]);
+  const discApp = useMemo(() => getPortfolioDiscApp(content), [content]);
+  const menuItems = useMemo(() => getPortfolioMenuItems(content), [content]);
+  const { selectedMenuId, setMenuButtonRef, setSelectedMenuId } = useDashboardNavigation({
+    disabled: activeApp !== null || launchingApp !== null,
+    menuItems,
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadContent() {
+      try {
+        const response = await fetch("/api/content", {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          content?: SerializableContentPayload | null;
+        };
+
+        if (!payload.content) {
+          return;
+        }
+
+        setContent((current) => ({
+          ...current,
+          gameProjects: payload.content?.gameProjects ?? current.gameProjects,
+          profile: payload.content?.profile ?? current.profile,
+          researchProjects: payload.content?.researchProjects ?? current.researchProjects,
+          resourceLinks: mergeResourceLinks(current.resourceLinks, payload.content?.resourceLinks),
+          showreelItems: payload.content?.showreelItems ?? current.showreelItems,
+        }));
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("[theguyser] Failed to load portfolio content", error);
+        }
+      }
+    }
+
+    void loadContent();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -141,7 +238,7 @@ export default function PortfolioPage() {
   };
 
   const handleLaunchApp = (appId: AppId) => {
-    const nextApp = APPS.find((app) => app.id === appId);
+    const nextApp = apps.find((app) => app.id === appId);
 
     if (!nextApp) {
       return;
@@ -162,11 +259,20 @@ export default function PortfolioPage() {
     <main className="wii-bg relative flex min-h-screen flex-col overflow-x-hidden">
       <WaraWaraPlaza />
 
-      <PortfolioHeader isDark={resolvedTheme === "dark"} mounted={themeReady} onThemeToggle={handleThemeToggle} time={time} />
+      <PortfolioHeader
+        isDark={resolvedTheme === "dark"}
+        mounted={themeReady}
+        onThemeToggle={handleThemeToggle}
+        profile={content.profile}
+        time={time}
+      />
 
       <div className="z-10 flex flex-1 items-start justify-center px-4 pb-12 pt-6 sm:px-5 sm:pb-16 sm:pt-8 md:items-center md:px-8 md:pb-24 md:pt-8">
         <DashboardMenu
+          discApp={discApp}
+          menuItems={menuItems}
           onAppClick={handleAppClick}
+          profile={content.profile}
           selectedMenuId={selectedMenuId}
           setMenuButtonRef={setMenuButtonRef}
           setSelectedMenuId={setSelectedMenuId}
@@ -177,9 +283,10 @@ export default function PortfolioPage() {
 
       <LaunchOverlay animationDuration={launchAnimationDuration} launchingApp={launchAnimationEnabled ? launchingApp : null} />
 
-      <TabletDialog activeApp={activeApp} onClose={closeActiveApp}>
+      <TabletDialog activeApp={activeApp} onClose={closeActiveApp} profile={content.profile}>
         {activeApp ? (
           <PortfolioPanels
+            content={content}
             id={activeApp.id}
             options={{
               launchAnimationDuration,
