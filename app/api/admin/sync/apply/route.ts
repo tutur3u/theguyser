@@ -3,6 +3,7 @@ import {
   getTheGuyserWorkspaceId,
 } from "@/lib/theguyser-config";
 import { getTheGuyserAdminSession, revalidateTheGuyserContent } from "@/lib/theguyser-admin-api";
+import { syncPublicFolderAssets } from "@/lib/tuturuuu-public-folder-sync";
 import { theGuyserExternalProjectManifest } from "@/lib/theguyser-external-project-manifest";
 import { NextResponse } from "next/server";
 
@@ -23,14 +24,36 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as { force?: unknown } | null;
   const workspaceId = getTheGuyserWorkspaceId();
+  const apiBaseUrl = getTheGuyserApiBaseUrl();
+  const publicAssetSync = await syncPublicFolderAssets({
+    accessToken: session.accessToken,
+    apiBaseUrl,
+    manifest: theGuyserExternalProjectManifest,
+    tokenType: session.tokenType,
+    workspaceId,
+  });
+
+  if (publicAssetSync.skipped.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Missing local public assets. Upload aborted before applying the manifest.",
+        publicAssetSync: {
+          skipped: publicAssetSync.skipped,
+          uploaded: publicAssetSync.uploaded,
+        },
+      },
+      { status: 400 },
+    );
+  }
+
   const response = await fetch(
-    `${getTheGuyserApiBaseUrl().replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
+    `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,
     )}/external-projects/sync/apply`,
     {
       body: JSON.stringify({
         force: body?.force === true,
-        manifest: theGuyserExternalProjectManifest,
+        manifest: publicAssetSync.manifest,
       }),
       cache: "no-store",
       headers: {
@@ -47,5 +70,11 @@ export async function POST(request: Request) {
   }
 
   revalidateTheGuyserContent();
-  return NextResponse.json(await response.json());
+  return NextResponse.json({
+    ...(await response.json()),
+    publicAssetSync: {
+      skipped: publicAssetSync.skipped,
+      uploaded: publicAssetSync.uploaded,
+    },
+  });
 }

@@ -147,6 +147,9 @@ export const theGuyserExternalProjectManifest = {
           {
             altText: `${PROFILE.name} portrait`,
             assetType: "image",
+            metadata: {
+              publicPath: "/bao-chua-hero.jpg",
+            },
             sortOrder: 0,
             sourceUrl: PROFILE.image,
             stableSourceId: "theguyser:panel:profile:image",

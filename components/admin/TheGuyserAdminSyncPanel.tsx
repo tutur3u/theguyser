@@ -44,6 +44,10 @@ export function TheGuyserAdminSyncPanel() {
   const [diff, setDiff] = useState<SyncDiffResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<"apply" | "diff" | null>(null);
+  const [publicAssetSync, setPublicAssetSync] = useState<{
+    skipped?: unknown[];
+    uploaded?: unknown[];
+  } | null>(null);
   const summary = diff?.summary;
   const totalOperations =
     (summary?.archive ?? 0) +
@@ -54,6 +58,7 @@ export function TheGuyserAdminSyncPanel() {
   const runDiff = async () => {
     setPendingAction("diff");
     setError(null);
+    setPublicAssetSync(null);
     try {
       setDiff(await postAdminJson<SyncDiffResponse>("/api/admin/sync/diff"));
     } catch (nextError) {
@@ -67,9 +72,14 @@ export function TheGuyserAdminSyncPanel() {
     setPendingAction("apply");
     setError(null);
     try {
-      const result = await postAdminJson<{ diff?: SyncDiffResponse }>("/api/admin/sync/apply", {
-        force,
-      });
+      const result = await postAdminJson<{
+        diff?: SyncDiffResponse;
+        publicAssetSync?: {
+          skipped?: unknown[];
+          uploaded?: unknown[];
+        };
+      }>("/api/admin/sync/apply", { force });
+      setPublicAssetSync(result.publicAssetSync ?? null);
       setDiff(result.diff ?? (await postAdminJson<SyncDiffResponse>("/api/admin/sync/diff")));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Sync request failed.");
@@ -161,6 +171,13 @@ export function TheGuyserAdminSyncPanel() {
       {diff && !diff.hasDestructiveOperations ? (
         <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
           {totalOperations === 0 ? "Manifest is already in sync." : `${totalOperations} changes ready.`}
+        </p>
+      ) : null}
+
+      {publicAssetSync ? (
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          Uploaded {publicAssetSync.uploaded?.length ?? 0} public assets
+          {publicAssetSync.skipped?.length ? `, skipped ${publicAssetSync.skipped.length}` : ""}.
         </p>
       ) : null}
 
