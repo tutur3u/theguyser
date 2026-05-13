@@ -25,6 +25,29 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { force?: unknown } | null;
   const workspaceId = getTheGuyserWorkspaceId();
   const apiBaseUrl = getTheGuyserApiBaseUrl();
+  const setupResponse = await fetch(
+    `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/external-projects/setup`,
+    {
+      body: JSON.stringify({ manifest: theGuyserExternalProjectManifest }),
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        Authorization: `${session.tokenType} ${session.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+
+  if (!setupResponse.ok) {
+    return NextResponse.json(
+      { error: await readApiError(setupResponse) },
+      { status: setupResponse.status },
+    );
+  }
+
   const publicAssetSync = await syncPublicFolderAssets({
     accessToken: session.accessToken,
     apiBaseUrl,

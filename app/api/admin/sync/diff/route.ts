@@ -23,9 +23,33 @@ export async function POST() {
   }
 
   const workspaceId = getTheGuyserWorkspaceId();
+  const apiBaseUrl = getTheGuyserApiBaseUrl();
   const manifest = linkPublicFolderAssets(theGuyserExternalProjectManifest);
+  const setupResponse = await fetch(
+    `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/external-projects/setup`,
+    {
+      body: JSON.stringify({ manifest }),
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        Authorization: `${session.tokenType} ${session.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+
+  if (!setupResponse.ok) {
+    return NextResponse.json(
+      { error: await readApiError(setupResponse) },
+      { status: setupResponse.status },
+    );
+  }
+
   const response = await fetch(
-    `${getTheGuyserApiBaseUrl().replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
+    `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,
     )}/external-projects/sync/diff`,
     {
