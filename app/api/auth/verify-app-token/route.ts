@@ -2,6 +2,7 @@ import {
   getTheGuyserApiBaseUrl,
   getTheGuyserAppId,
   getTheGuyserAppSecret,
+  getTheGuyserWorkspaceId,
 } from "@/lib/theguyser-config";
 import {
   setTheGuyserSessionCookie,
@@ -19,6 +20,7 @@ type AppTokenExchangeResponse = {
   error?: string;
   expiresAt?: string;
   tokenType?: string;
+  workspaceId?: string | null;
   user?: {
     email?: string | null;
     id?: string;
@@ -52,6 +54,7 @@ async function exchangeCrossAppToken(token: string) {
       appSecret: getTheGuyserAppSecret(),
       requestedScopes: ["external-projects:*"],
       token,
+      workspaceId: getTheGuyserWorkspaceId(),
     }),
     cache: "no-store",
     headers: {
@@ -69,7 +72,7 @@ async function exchangeCrossAppToken(token: string) {
 }
 
 function toTheGuyserSession(payload: AppTokenExchangeResponse): TheGuyserAdminSession {
-  if (!payload.accessToken || !payload.expiresAt || !payload.user?.id) {
+  if (!payload.accessToken || !payload.expiresAt || !payload.user?.id || !payload.workspaceId) {
     throw new Error("Invalid Tuturuuu app token exchange response.");
   }
 
@@ -80,6 +83,7 @@ function toTheGuyserSession(payload: AppTokenExchangeResponse): TheGuyserAdminSe
     },
     expiresAt: payload.expiresAt,
     tokenType: "Bearer",
+    workspaceId: payload.workspaceId,
     user: {
       email: payload.user.email ?? null,
       id: payload.user.id,

@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { getTheGuyserWorkspaceId } from "@/lib/theguyser-config";
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 
@@ -12,6 +13,7 @@ export type TheGuyserAdminSession = {
   };
   expiresAt: string;
   tokenType: "Bearer";
+  workspaceId: string;
   user: {
     email: string | null;
     id: string;
@@ -62,11 +64,15 @@ function unsealSession(value: string): TheGuyserAdminSession | null {
     ]).toString("utf8");
     const session = JSON.parse(plaintext) as TheGuyserAdminSession;
 
-    if (!session.accessToken || !session.user?.id || !session.expiresAt) {
+    if (!session.accessToken || !session.user?.id || !session.expiresAt || !session.workspaceId) {
       return null;
     }
 
     if (new Date(session.expiresAt).getTime() <= Date.now()) {
+      return null;
+    }
+
+    if (session.workspaceId !== getTheGuyserWorkspaceId()) {
       return null;
     }
 
