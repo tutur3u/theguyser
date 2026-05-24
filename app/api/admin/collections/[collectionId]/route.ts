@@ -1,4 +1,5 @@
 import {
+  deleteTheGuyserAdminCollection,
   getTheGuyserAdminSession,
   revalidateTheGuyserContent,
   updateTheGuyserAdminCollection,
@@ -33,6 +34,35 @@ export async function PATCH(
     console.error("[theguyser:admin] Failed to update collection", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to update collection" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ collectionId: string }> },
+) {
+  try {
+    const adminSession = await getTheGuyserAdminSession();
+
+    if (!adminSession) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { collectionId } = await params;
+    const result = await deleteTheGuyserAdminCollection(
+      adminSession.accessToken,
+      collectionId,
+    );
+
+    revalidateTheGuyserContent();
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("[theguyser:admin] Failed to delete collection", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete collection" },
       { status: 500 },
     );
   }

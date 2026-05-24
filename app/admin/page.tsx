@@ -2,6 +2,7 @@ import { TheGuyserAdminClient } from "@/components/admin/TheGuyserAdminClient";
 import {
   buildTheGuyserAdminLinks,
   getTheGuyserAdminLoginPath,
+  getTheGuyserApiBaseUrl,
   getTheGuyserCmsBaseUrl,
   getTheGuyserWebAppUrl,
   getTheGuyserWorkspaceId,
@@ -40,6 +41,7 @@ export default async function AdminPage({
   return (
     <TheGuyserAdminClient
       adminLinks={buildTheGuyserAdminLinks(workspaceId)}
+      apiBaseUrl={getTheGuyserApiBaseUrl()}
       cmsBaseUrl={getTheGuyserCmsBaseUrl()}
       initialStudio={studio}
       initialTarget={targetKey}

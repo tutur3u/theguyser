@@ -94,6 +94,42 @@ type TheGuyserCollectionUpdatePayload = Partial<
   >
 >;
 
+type TheGuyserCollectionCreatePayload = Pick<
+  TheGuyserAdminCollection,
+  "collection_type" | "config" | "description" | "slug" | "title"
+>;
+
+type TheGuyserEntryCreatePayload = Pick<
+  TheGuyserAdminEntry,
+  | "collection_id"
+  | "metadata"
+  | "profile_data"
+  | "scheduled_for"
+  | "slug"
+  | "status"
+  | "subtitle"
+  | "summary"
+  | "title"
+>;
+
+type TheGuyserBlockPayload = Partial<
+  Pick<TheGuyserAdminBlock, "block_type" | "content" | "entry_id" | "sort_order" | "title">
+>;
+
+type TheGuyserAssetPayload = Partial<
+  Pick<
+    TheGuyserAdminAsset,
+    | "alt_text"
+    | "asset_type"
+    | "block_id"
+    | "entry_id"
+    | "metadata"
+    | "sort_order"
+    | "source_url"
+    | "storage_path"
+  >
+>;
+
 function normalizeApiBaseUrl(value = getTheGuyserApiBaseUrl()) {
   return value.replace(/\/+$/, "");
 }
@@ -192,6 +228,40 @@ export async function updateTheGuyserAdminEntry(
   });
 }
 
+export async function createTheGuyserAdminEntry(
+  accessToken: string,
+  payload: TheGuyserEntryCreatePayload,
+) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<TheGuyserAdminEntry>({
+    accessToken,
+    body: payload,
+    method: "POST",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/entries`,
+  });
+}
+
+export async function deleteTheGuyserAdminEntry(accessToken: string, entryId: string) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<{ id: string }>({
+    accessToken,
+    method: "DELETE",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/entries/${encodeURIComponent(entryId)}`,
+  });
+}
+
+export async function duplicateTheGuyserAdminEntry(accessToken: string, entryId: string) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<TheGuyserAdminEntry>({
+    accessToken,
+    method: "POST",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/entries/${encodeURIComponent(entryId)}/duplicate`,
+  });
+}
+
 export async function publishTheGuyserAdminEntry(
   accessToken: string,
   entryId: string,
@@ -219,6 +289,111 @@ export async function updateTheGuyserAdminCollection(
     body: payload,
     method: "PATCH",
     path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/collections/${encodeURIComponent(collectionId)}`,
+  });
+}
+
+export async function createTheGuyserAdminCollection(
+  accessToken: string,
+  payload: TheGuyserCollectionCreatePayload,
+) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<TheGuyserAdminCollection>({
+    accessToken,
+    body: payload,
+    method: "POST",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/collections`,
+  });
+}
+
+export async function deleteTheGuyserAdminCollection(
+  accessToken: string,
+  collectionId: string,
+) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<{ id: string }>({
+    accessToken,
+    method: "DELETE",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/collections/${encodeURIComponent(collectionId)}`,
+  });
+}
+
+export async function createTheGuyserAdminBlock(
+  accessToken: string,
+  payload: TheGuyserBlockPayload & Pick<TheGuyserAdminBlock, "block_type" | "entry_id">,
+) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<TheGuyserAdminBlock>({
+    accessToken,
+    body: payload,
+    method: "POST",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/blocks`,
+  });
+}
+
+export async function updateTheGuyserAdminBlock(
+  accessToken: string,
+  blockId: string,
+  payload: TheGuyserBlockPayload,
+) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<TheGuyserAdminBlock>({
+    accessToken,
+    body: payload,
+    method: "PATCH",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/blocks/${encodeURIComponent(blockId)}`,
+  });
+}
+
+export async function deleteTheGuyserAdminBlock(accessToken: string, blockId: string) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<{ id: string }>({
+    accessToken,
+    method: "DELETE",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/blocks/${encodeURIComponent(blockId)}`,
+  });
+}
+
+export async function createTheGuyserAdminAsset(
+  accessToken: string,
+  payload: TheGuyserAssetPayload & Pick<TheGuyserAdminAsset, "asset_type">,
+) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<TheGuyserAdminAsset>({
+    accessToken,
+    body: payload,
+    method: "POST",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/assets`,
+  });
+}
+
+export async function updateTheGuyserAdminAsset(
+  accessToken: string,
+  assetId: string,
+  payload: TheGuyserAssetPayload,
+) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<TheGuyserAdminAsset>({
+    accessToken,
+    body: payload,
+    method: "PATCH",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/assets/${encodeURIComponent(assetId)}`,
+  });
+}
+
+export async function deleteTheGuyserAdminAsset(accessToken: string, assetId: string) {
+  const workspaceId = getTheGuyserWorkspaceId();
+
+  return fetchTuturuuuApi<{ id: string }>({
+    accessToken,
+    method: "DELETE",
+    path: `/workspaces/${encodeURIComponent(workspaceId)}/external-projects/assets/${encodeURIComponent(assetId)}`,
   });
 }
 

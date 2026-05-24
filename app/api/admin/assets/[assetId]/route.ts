@@ -2,8 +2,13 @@ import {
   getTheGuyserApiBaseUrl,
   getTheGuyserWorkspaceId,
 } from "@/lib/theguyser-config";
-import { getTheGuyserAdminSession } from "@/lib/theguyser-admin-api";
-import { NextResponse } from "next/server";
+import {
+  deleteTheGuyserAdminAsset,
+  getTheGuyserAdminSession,
+  revalidateTheGuyserContent,
+  updateTheGuyserAdminAsset,
+} from "@/lib/theguyser-admin-api";
+import { type NextRequest, NextResponse } from "next/server";
 
 const TRANSFORM_QUERY_PARAMS = ["width", "height", "resize", "quality", "format"] as const;
 
@@ -62,7 +67,17 @@ async function readUpstreamError(response: Response) {
     }
   }
 
-  return response.text().catch(() => "Asset unavailable");
+  const text = await response.text().catch(() => "");
+
+  if (/NoSuchKey|NoSuchBucket|Object not found|specified key does not exist/i.test(text)) {
+    return "Asset unavailable in the active storage provider.";
+  }
+
+  if (text.trim().startsWith("<?xml") || contentType.includes("xml")) {
+    return "Asset unavailable.";
+  }
+
+  return text || "Asset unavailable";
 }
 
 export async function GET(
@@ -96,4 +111,57 @@ export async function GET(
     headers: copyImageHeaders(upstream),
     status: 200,
   });
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ assetId: string }> },
+) {
+  try {
+    const session = await getTheGuyserAdminSession();
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { assetId } = await params;
+    const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+    const asset = await updateTheGuyserAdminAsset(session.accessToken, assetId, body ?? {});
+
+    revalidateTheGuyserContent();
+
+    return NextResponse.json(asset);
+  } catch (error) {
+    console.error("[theguyser:admin] Failed to update asset", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to update asset" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ assetId: string }> },
+) {
+  try {
+    const session = await getTheGuyserAdminSession();
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { assetId } = await params;
+    const result = await deleteTheGuyserAdminAsset(session.accessToken, assetId);
+
+    revalidateTheGuyserContent();
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("[theguyser:admin] Failed to delete asset", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete asset" },
+      { status: 500 },
+    );
+  }
 }

@@ -14,14 +14,18 @@ import type {
 import {
   ArrowUpRight,
   Check,
+  Copy,
   Eye,
   FileText,
+  Layers,
   LoaderCircle,
   LogOut,
+  Plus,
   RefreshCw,
   Save,
   Send,
   Settings2,
+  Trash2,
   Undo2,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -36,6 +40,7 @@ type AdminLink = {
 };
 
 type EntryDraft = {
+  blockMarkdownText: string;
   metadataText: string;
   profileDataText: string;
   scheduledFor: string;
@@ -57,9 +62,13 @@ type CollectionDraft = {
 const ENTRY_STATUSES: TheGuyserEntryStatus[] = ["draft", "scheduled", "published", "archived"];
 
 function mergeEntry(studio: TheGuyserAdminStudioPayload, entry: TheGuyserAdminEntry) {
+  const exists = studio.entries.some((item) => item.id === entry.id);
+
   return {
     ...studio,
-    entries: studio.entries.map((item) => (item.id === entry.id ? entry : item)),
+    entries: exists
+      ? studio.entries.map((item) => (item.id === entry.id ? entry : item))
+      : [entry, ...studio.entries],
   };
 }
 
@@ -67,9 +76,24 @@ function mergeCollection(
   studio: TheGuyserAdminStudioPayload,
   collection: TheGuyserAdminCollection,
 ) {
+  const exists = studio.collections.some((item) => item.id === collection.id);
+
   return {
     ...studio,
-    collections: studio.collections.map((item) => (item.id === collection.id ? collection : item)),
+    collections: exists
+      ? studio.collections.map((item) => (item.id === collection.id ? collection : item))
+      : [collection, ...studio.collections],
+  };
+}
+
+function mergeBlock(studio: TheGuyserAdminStudioPayload, block: TheGuyserAdminBlock) {
+  const exists = studio.blocks.some((item) => item.id === block.id);
+
+  return {
+    ...studio,
+    blocks: exists
+      ? studio.blocks.map((item) => (item.id === block.id ? block : item))
+      : [...studio.blocks, block],
   };
 }
 
@@ -145,8 +169,26 @@ async function fetchAdminJson<T>(url: string, init?: RequestInit) {
   return (await response.json()) as T;
 }
 
-function getEntryDraft(entry: TheGuyserAdminEntry): EntryDraft {
+function getEntryMarkdownBlock(
+  entry: TheGuyserAdminEntry,
+  blocks: TheGuyserAdminBlock[],
+) {
+  return (
+    blocks
+      .filter((block) => block.entry_id === entry.id)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .find((block) => block.block_type === "markdown") ?? null
+  );
+}
+
+function getEntryDraft(entry: TheGuyserAdminEntry, blocks: TheGuyserAdminBlock[]): EntryDraft {
+  const markdownBlock = getEntryMarkdownBlock(entry, blocks);
+
   return {
+    blockMarkdownText:
+      typeof markdownBlock?.content?.markdown === "string"
+        ? markdownBlock.content.markdown
+        : "",
     metadataText: stringifyJson(entry.metadata),
     profileDataText: stringifyJson(entry.profile_data),
     scheduledFor: toDatetimeLocal(entry.scheduled_for),
@@ -265,7 +307,9 @@ function TextArea({
 }
 
 function EntryEditor({
+  apiBaseUrl,
   assets,
+  blocks,
   collectionSlug,
   collectionTitle,
   entry,
@@ -273,19 +317,28 @@ function EntryEditor({
   isSaving,
   onPublish,
   onSave,
+  onSaveBlock,
 }: {
+  apiBaseUrl: string;
   assets: TheGuyserAdminAsset[];
+  blocks: TheGuyserAdminBlock[];
   collectionSlug: string;
   collectionTitle: string;
   entry: TheGuyserAdminEntry;
   isPublishing: boolean;
   isSaving: boolean;
   onPublish: (entryId: string, eventKind: "publish" | "unpublish") => void;
+  onSaveBlock: (payload: {
+    blockId: string | null;
+    entryId: string;
+    markdown: string;
+  }) => void;
   onSave: (entryId: string, payload: Record<string, unknown>) => void;
 }) {
-  const [draft, setDraft] = useState(() => getEntryDraft(entry));
+  const [draft, setDraft] = useState(() => getEntryDraft(entry, blocks));
   const [jsonError, setJsonError] = useState<string | null>(null);
   const primaryAsset = getPrimaryAsset(entry, assets);
+  const markdownBlock = getEntryMarkdownBlock(entry, blocks);
 
   const setDraftValue = (key: keyof EntryDraft, value: string) => {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -313,7 +366,11 @@ function EntryEditor({
     <section className="grid min-h-[44rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
       <div className="border-b border-slate-200 p-5 dark:border-slate-800 lg:border-r lg:border-b-0">
         <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-          <TheGuyserAdminMediaImage alt={primaryAsset?.alt_text ?? entry.title} asset={primaryAsset} />
+          <TheGuyserAdminMediaImage
+            alt={primaryAsset?.alt_text ?? entry.title}
+            apiBaseUrl={apiBaseUrl}
+            asset={primaryAsset}
+          />
         </div>
         <div className="mt-5 space-y-3 text-sm text-slate-500 dark:text-slate-400">
           <div className="flex items-center justify-between gap-3">
@@ -414,6 +471,31 @@ function EntryEditor({
             onChange={(value) => setDraftValue("profileDataText", value)}
             profileDataText={draft.profileDataText}
           />
+          <div className="md:col-span-2">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                Markdown block
+              </span>
+              <AdminButton
+                disabled={isSaving}
+                onClick={() =>
+                  onSaveBlock({
+                    blockId: markdownBlock?.id ?? null,
+                    entryId: entry.id,
+                    markdown: draft.blockMarkdownText,
+                  })
+                }
+              >
+                {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
+                Save block
+              </AdminButton>
+            </div>
+            <TextArea
+              minRows={7}
+              onChange={(value) => setDraftValue("blockMarkdownText", value)}
+              value={draft.blockMarkdownText}
+            />
+          </div>
           <div className="md:col-span-2">
             <Field label="Profile data">
               <TextArea minRows={8} onChange={(value) => setDraftValue("profileDataText", value)} value={draft.profileDataText} />
@@ -518,6 +600,7 @@ function CollectionEditor({
 
 export function TheGuyserAdminClient({
   adminLinks,
+  apiBaseUrl,
   cmsBaseUrl,
   initialStudio,
   initialTarget,
@@ -526,6 +609,7 @@ export function TheGuyserAdminClient({
   workspaceId,
 }: {
   adminLinks: AdminLink[];
+  apiBaseUrl: string;
   cmsBaseUrl: string;
   initialStudio: TheGuyserAdminStudioPayload;
   initialTarget: string | null;
@@ -540,7 +624,9 @@ export function TheGuyserAdminClient({
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(initialStudio.collections[0]?.id ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<"collection" | "entry" | "publish" | "refresh" | null>(null);
+  const [pendingAction, setPendingAction] = useState<
+    "block" | "collection" | "entry" | "publish" | "refresh" | null
+  >(null);
   const advancedLink = adminLinks.find((link) => link.key === initialTarget) ?? adminLinks[0];
 
   const filteredEntries = useMemo(
@@ -603,6 +689,132 @@ export function TheGuyserAdminClient({
     }
   };
 
+  const createEntry = async () => {
+    const collectionId = selectedCollection?.id ?? studio.collections[0]?.id;
+
+    if (!collectionId) {
+      setMutationError("Create a collection before adding entries.");
+      return;
+    }
+
+    setPendingAction("entry");
+    setMutationError(null);
+    try {
+      const entry = await fetchAdminJson<TheGuyserAdminEntry>("/api/admin/entries", {
+        body: JSON.stringify({
+          collection_id: collectionId,
+          metadata: {},
+          profile_data: {},
+          scheduled_for: null,
+          slug: `draft-${Date.now()}`,
+          status: "draft",
+          subtitle: null,
+          summary: null,
+          title: "Untitled entry",
+        }),
+        method: "POST",
+      });
+      setStudio((current) => mergeEntry(current, entry));
+      setSelectedEntryId(entry.id);
+      setSelectedCollectionId(entry.collection_id);
+      setStatusMessage("Entry created.");
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : "Failed to create entry.");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const duplicateEntry = async () => {
+    if (!selectedEntry) {
+      return;
+    }
+
+    setPendingAction("entry");
+    setMutationError(null);
+    try {
+      const entry = await fetchAdminJson<TheGuyserAdminEntry>(
+        `/api/admin/entries/${encodeURIComponent(selectedEntry.id)}/duplicate`,
+        {
+          method: "POST",
+        },
+      );
+      setStudio((current) => mergeEntry(current, entry));
+      setSelectedEntryId(entry.id);
+      setSelectedCollectionId(entry.collection_id);
+      setStatusMessage("Entry duplicated.");
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : "Failed to duplicate entry.");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const deleteEntry = async () => {
+    if (!selectedEntry || !window.confirm(`Delete "${selectedEntry.title}"?`)) {
+      return;
+    }
+
+    setPendingAction("entry");
+    setMutationError(null);
+    try {
+      await fetchAdminJson<{ id: string }>(
+        `/api/admin/entries/${encodeURIComponent(selectedEntry.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
+      setStudio((current) => ({
+        ...current,
+        assets: current.assets.filter((asset) => asset.entry_id !== selectedEntry.id),
+        blocks: current.blocks.filter((block) => block.entry_id !== selectedEntry.id),
+        entries: current.entries.filter((entry) => entry.id !== selectedEntry.id),
+      }));
+      setSelectedEntryId(null);
+      setStatusMessage("Entry deleted.");
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : "Failed to delete entry.");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const saveBlock = async ({
+    blockId,
+    entryId,
+    markdown,
+  }: {
+    blockId: string | null;
+    entryId: string;
+    markdown: string;
+  }) => {
+    setPendingAction("block");
+    setMutationError(null);
+    try {
+      const block = await fetchAdminJson<TheGuyserAdminBlock>(
+        blockId ? `/api/admin/blocks/${encodeURIComponent(blockId)}` : "/api/admin/blocks",
+        {
+          body: JSON.stringify({
+            block_type: "markdown",
+            content: {
+              markdown,
+            },
+            entry_id: entryId,
+            sort_order: 0,
+            title: null,
+          }),
+          method: blockId ? "PATCH" : "POST",
+        },
+      );
+      setStudio((current) => mergeBlock(current, block));
+      setStatusMessage("Block saved.");
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : "Failed to save block.");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
   const publishEntry = async (entryId: string, eventKind: "publish" | "unpublish") => {
     setPendingAction("publish");
     setMutationError(null);
@@ -637,6 +849,77 @@ export function TheGuyserAdminClient({
     }
   };
 
+  const createCollection = async () => {
+    setPendingAction("collection");
+    setMutationError(null);
+    try {
+      const suffix = Date.now();
+      const collection = await fetchAdminJson<TheGuyserAdminCollection>(
+        "/api/admin/collections",
+        {
+          body: JSON.stringify({
+            collection_type: "custom",
+            config: {},
+            description: "Custom TheGuyser content collection.",
+            slug: `custom-${suffix}`,
+            title: "Untitled collection",
+          }),
+          method: "POST",
+        },
+      );
+      setStudio((current) => mergeCollection(current, collection));
+      setSelectedCollectionId(collection.id);
+      setCollectionFilter(collection.id);
+      setStatusMessage("Collection created.");
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : "Failed to create collection.");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const deleteCollection = async () => {
+    if (!selectedCollection || !window.confirm(`Delete "${selectedCollection.title}" and its entries?`)) {
+      return;
+    }
+
+    setPendingAction("collection");
+    setMutationError(null);
+    try {
+      await fetchAdminJson<{ id: string }>(
+        `/api/admin/collections/${encodeURIComponent(selectedCollection.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
+      setStudio((current) => {
+        const entryIds = new Set(
+          current.entries
+            .filter((entry) => entry.collection_id === selectedCollection.id)
+            .map((entry) => entry.id),
+        );
+
+        return {
+          ...current,
+          assets: current.assets.filter((asset) => !asset.entry_id || !entryIds.has(asset.entry_id)),
+          blocks: current.blocks.filter((block) => !entryIds.has(block.entry_id)),
+          collections: current.collections.filter(
+            (collection) => collection.id !== selectedCollection.id,
+          ),
+          entries: current.entries.filter((entry) => entry.collection_id !== selectedCollection.id),
+        };
+      });
+      setSelectedCollectionId(null);
+      setSelectedEntryId(null);
+      setCollectionFilter("all");
+      setStatusMessage("Collection deleted.");
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : "Failed to delete collection.");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
   const signOut = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/";
@@ -657,6 +940,10 @@ export function TheGuyserAdminClient({
             <AdminButton disabled={pendingAction === "refresh"} onClick={() => void refreshStudio()}>
               {pendingAction === "refresh" ? <LoaderCircle className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
               Refresh
+            </AdminButton>
+            <AdminButton disabled={pendingAction === "entry"} onClick={() => void createEntry()} tone="primary">
+              {pendingAction === "entry" ? <LoaderCircle className="size-4 animate-spin" /> : <Plus className="size-4" />}
+              New entry
             </AdminButton>
             <a className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:border-sky-300 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200" href={advancedLink?.cmsHref ?? cmsBaseUrl} rel="noreferrer" target="_blank">
               <ArrowUpRight className="size-4" />
@@ -708,6 +995,24 @@ export function TheGuyserAdminClient({
           <aside className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="border-b border-slate-200 p-4 dark:border-slate-800">
               <div className="grid gap-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <AdminButton disabled={pendingAction === "entry"} onClick={() => void createEntry()} tone="primary">
+                    <Plus className="size-4" />
+                    Entry
+                  </AdminButton>
+                  <AdminButton disabled={pendingAction === "collection"} onClick={() => void createCollection()}>
+                    <Layers className="size-4" />
+                    Collection
+                  </AdminButton>
+                  <AdminButton disabled={!selectedEntry || pendingAction === "entry"} onClick={() => void duplicateEntry()}>
+                    <Copy className="size-4" />
+                    Duplicate
+                  </AdminButton>
+                  <AdminButton disabled={!selectedEntry || pendingAction === "entry"} onClick={() => void deleteEntry()} tone="danger">
+                    <Trash2 className="size-4" />
+                    Delete
+                  </AdminButton>
+                </div>
                 <select className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white" onChange={(event) => setCollectionFilter(event.target.value)} value={collectionFilter}>
                   <option value="all">All collections</option>
                   {studio.collections.map((collection) => (
@@ -738,7 +1043,11 @@ export function TheGuyserAdminClient({
                       type="button"
                     >
                       <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-                        <TheGuyserAdminMediaImage alt={entryAsset?.alt_text ?? entry.title} asset={entryAsset} />
+                        <TheGuyserAdminMediaImage
+                          alt={entryAsset?.alt_text ?? entry.title}
+                          apiBaseUrl={apiBaseUrl}
+                          asset={entryAsset}
+                        />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-start justify-between gap-3">
@@ -763,14 +1072,17 @@ export function TheGuyserAdminClient({
             {selectedEntry ? (
               <EntryEditor
                 assets={studio.assets}
+                apiBaseUrl={apiBaseUrl}
+                blocks={studio.blocks}
                 collectionSlug={selectedCollection?.slug ?? ""}
                 collectionTitle={getCollectionTitle(studio.collections, selectedEntry.collection_id)}
                 entry={selectedEntry}
                 isPublishing={pendingAction === "publish"}
-                isSaving={pendingAction === "entry"}
+                isSaving={pendingAction === "entry" || pendingAction === "block"}
                 key={`${selectedEntry.id}:${selectedEntry.updated_at ?? ""}:${selectedEntry.status}`}
                 onPublish={(entryId, eventKind) => void publishEntry(entryId, eventKind)}
                 onSave={(entryId, payload) => void saveEntry(entryId, payload)}
+                onSaveBlock={(payload) => void saveBlock(payload)}
               />
             ) : (
               <section className="grid min-h-[32rem] place-items-center rounded-[2rem] border border-slate-200 bg-white text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -788,6 +1100,18 @@ export function TheGuyserAdminClient({
                 key={`${selectedCollection.id}:${selectedCollection.updated_at ?? ""}`}
                 onSave={(collectionId, payload) => void saveCollection(collectionId, payload)}
               />
+            ) : null}
+            {selectedCollection ? (
+              <div className="flex justify-end">
+                <AdminButton
+                  disabled={pendingAction === "collection"}
+                  onClick={() => void deleteCollection()}
+                  tone="danger"
+                >
+                  <Trash2 className="size-4" />
+                  Delete collection
+                </AdminButton>
+              </div>
             ) : null}
           </main>
         </div>

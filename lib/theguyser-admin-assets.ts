@@ -14,6 +14,10 @@ export type TheGuyserAdminImageTransform = {
   width?: number;
 };
 
+export type TheGuyserAdminAssetSourceOptions = {
+  apiBaseUrl?: string | null;
+};
+
 const DEFAULT_ADMIN_IMAGE_TRANSFORM = {
   height: 1600,
   quality: 82,
@@ -79,13 +83,46 @@ function compactUniqueSources(values: Array<string | null | undefined>) {
   return sources;
 }
 
+function normalizePlatformAssetUrl(
+  value: string | null | undefined,
+  apiBaseUrl: string | null | undefined,
+) {
+  const source = value?.trim();
+
+  if (!source) {
+    return null;
+  }
+
+  if (!apiBaseUrl || /^https?:\/\//i.test(source) || source.startsWith("/api/admin/")) {
+    return source;
+  }
+
+  try {
+    const apiUrl = new URL(apiBaseUrl);
+
+    if (source.startsWith("/api/v1/")) {
+      return new URL(source, apiUrl.origin).toString();
+    }
+
+    if (source.startsWith("/workspaces/")) {
+      return new URL(
+        `${apiUrl.pathname.replace(/\/+$/, "")}${source}`,
+        apiUrl.origin,
+      ).toString();
+    }
+  } catch {}
+
+  return source;
+}
+
 export function getTheGuyserAdminAssetSources(
   asset: TheGuyserAdminImageAsset | null | undefined,
+  options: TheGuyserAdminAssetSourceOptions = {},
 ) {
   return compactUniqueSources([
     getTheGuyserAdminAssetProxyPath(asset),
-    asset?.preview_url,
-    asset?.asset_url,
-    asset?.source_url,
+    normalizePlatformAssetUrl(asset?.preview_url, options.apiBaseUrl),
+    normalizePlatformAssetUrl(asset?.asset_url, options.apiBaseUrl),
+    normalizePlatformAssetUrl(asset?.source_url, options.apiBaseUrl),
   ]);
 }

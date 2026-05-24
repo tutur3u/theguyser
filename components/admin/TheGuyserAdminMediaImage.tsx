@@ -10,12 +10,17 @@ import { useMemo, useState } from "react";
 
 export function TheGuyserAdminMediaImage({
   alt,
+  apiBaseUrl,
   asset,
 }: {
   alt: string;
+  apiBaseUrl?: string | null;
   asset: TheGuyserAdminImageAsset | null | undefined;
 }) {
-  const sources = useMemo(() => getTheGuyserAdminAssetSources(asset), [asset]);
+  const sources = useMemo(
+    () => getTheGuyserAdminAssetSources(asset, { apiBaseUrl }),
+    [apiBaseUrl, asset],
+  );
   const sourceKey = sources.join("\n");
   const [loadState, setLoadState] = useState(() => ({
     failedSources: [] as string[],

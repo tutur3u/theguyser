@@ -4,6 +4,7 @@ import {
   PROFILE,
   RESEARCH_PROJECTS,
   RESOURCE_LINKS,
+  SHOWREEL_ITEMS,
 } from "@/components/portfolio/data";
 import type { Project } from "@/components/portfolio/types";
 
@@ -95,6 +96,10 @@ const linkProfileFields = [
   { key: "href", label: "URL", type: "string" },
   { key: "note", label: "Note", type: "string" },
   { key: "appId", label: "Internal app", type: "string" },
+] satisfies TheGuyserSyncField[];
+
+const showreelProfileFields = [
+  { key: "label", label: "Display label", type: "string" },
 ] satisfies TheGuyserSyncField[];
 
 const PUBLISHED_STATUS = "published" as const;
@@ -207,6 +212,21 @@ export const theGuyserExternalProjectManifest = {
         summary: resource.note,
         title: resource.label,
       })),
+      ...SHOWREEL_ITEMS.map((item, index) => ({
+        blocks: [],
+        collectionSlug: "showreel",
+        profileData: {
+          label: item,
+        },
+        slug: focusSlug(item),
+        stableSourceId: `theguyser:showreel:${focusSlug(item)}`,
+        status: PUBLISHED_STATUS,
+        summary: null,
+        title: item,
+        metadata: {
+          sortOrder: index,
+        },
+      })),
     ],
   },
   schema: {
@@ -242,6 +262,13 @@ export const theGuyserExternalProjectManifest = {
         profileFields: linkProfileFields,
         slug: "contact-social",
         title: "Contact & Social",
+      },
+      {
+        collection_type: "showreel",
+        description: "Showreel labels and section ordering.",
+        profileFields: showreelProfileFields,
+        slug: "showreel",
+        title: "Showreel",
       },
     ],
     profileFields: [

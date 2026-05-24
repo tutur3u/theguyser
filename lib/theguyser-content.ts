@@ -5,6 +5,7 @@ import {
 } from "@/components/portfolio/data";
 import type {
   PortfolioContent,
+  FocusArea,
   PortfolioProfile,
   Project,
   ResourceLink,
@@ -197,6 +198,48 @@ function getResourceLinks(delivery: TheGuyserDeliveryPayload): ResourceLink[] {
   });
 }
 
+function getFocusAreas(delivery: TheGuyserDeliveryPayload): FocusArea[] {
+  const focus = getCollection(delivery, "awards");
+  const entries = focus?.entries ?? [];
+
+  if (entries.length === 0) {
+    return DEFAULT_PORTFOLIO_CONTENT.focusAreas;
+  }
+
+  return entries.map((entry, index) => {
+    const profileData = asRecord(entry.profile_data);
+    const fallback =
+      DEFAULT_PORTFOLIO_CONTENT.focusAreas[index] ??
+      DEFAULT_PORTFOLIO_CONTENT.focusAreas[0];
+
+    return {
+      ...fallback,
+      bg: asString(profileData.bg) ?? fallback.bg,
+      color: asString(profileData.color) ?? fallback.color,
+      description: entry.summary ?? getMarkdown(entry) ?? fallback.description,
+      title: entry.title,
+    };
+  });
+}
+
+function getShowreelItems(
+  delivery: TheGuyserDeliveryPayload,
+  fallbackProjects: Project[],
+) {
+  const showreel = getCollection(delivery, "showreel");
+  const showreelEntries = showreel?.entries ?? [];
+
+  if (showreelEntries.length > 0) {
+    return showreelEntries
+      .map((entry) => asString(asRecord(entry.profile_data).label) ?? entry.title)
+      .filter(Boolean);
+  }
+
+  return fallbackProjects.length > 0
+    ? fallbackProjects.map((project) => project.title)
+    : DEFAULT_PORTFOLIO_CONTENT.showreelItems;
+}
+
 export function buildTheGuyserPortfolioData(
   delivery: TheGuyserDeliveryPayload | null | undefined,
   {
@@ -215,7 +258,7 @@ export function buildTheGuyserPortfolioData(
   const projects = [...gameProjects, ...researchProjects];
 
   return {
-    focusAreas: DEFAULT_PORTFOLIO_CONTENT.focusAreas,
+    focusAreas: getFocusAreas(delivery),
     gameProjects: hasExperienceCollection
       ? gameProjects
       : DEFAULT_PORTFOLIO_CONTENT.gameProjects,
@@ -224,10 +267,7 @@ export function buildTheGuyserPortfolioData(
       ? researchProjects
       : DEFAULT_PORTFOLIO_CONTENT.researchProjects,
     resourceLinks: getResourceLinks(delivery),
-    showreelItems:
-      projects.length > 0
-        ? projects.map((project) => project.title)
-        : DEFAULT_PORTFOLIO_CONTENT.showreelItems,
+    showreelItems: getShowreelItems(delivery, projects),
   };
 }
 

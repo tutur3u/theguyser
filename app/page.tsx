@@ -18,11 +18,19 @@ import { PortfolioHeader, PortfolioFooter, LaunchOverlay, TabletDialog } from "@
 import { WaraWaraPlaza } from "@/components/portfolio/common";
 import { DashboardMenu } from "@/components/portfolio/menu";
 import { useDashboardNavigation } from "@/components/portfolio/use-dashboard-navigation";
-import type { AppDefinition, AppId, PortfolioContent, ResourceLink, ThemeMode } from "@/components/portfolio/types";
+import type {
+  AppDefinition,
+  AppId,
+  FocusArea,
+  PortfolioContent,
+  ResourceLink,
+  ThemeMode,
+} from "@/components/portfolio/types";
 
 type SerializableContentPayload = Partial<
   Pick<PortfolioContent, "gameProjects" | "profile" | "researchProjects" | "showreelItems">
 > & {
+  focusAreas?: Array<Omit<FocusArea, "icon">>;
   resourceLinks?: Array<Omit<ResourceLink, "icon">>;
 };
 
@@ -64,6 +72,28 @@ function mergeResourceLinks(
   }
 
   return merged;
+}
+
+function mergeFocusAreas(
+  current: FocusArea[],
+  incoming: Array<Omit<FocusArea, "icon">> | undefined,
+) {
+  if (!incoming?.length) {
+    return current;
+  }
+
+  return incoming.map((area, index) => {
+    const fallback =
+      current.find((item) => item.title === area.title) ??
+      current[index] ??
+      DEFAULT_PORTFOLIO_CONTENT.focusAreas[0];
+
+    return {
+      ...fallback,
+      ...area,
+      icon: fallback.icon,
+    };
+  });
 }
 
 type PortfolioPreferences = {
@@ -168,6 +198,7 @@ export default function PortfolioPage() {
 
         setContent((current) => ({
           ...current,
+          focusAreas: mergeFocusAreas(current.focusAreas, payload.content?.focusAreas),
           gameProjects: payload.content?.gameProjects ?? current.gameProjects,
           profile: payload.content?.profile ?? current.profile,
           researchProjects: payload.content?.researchProjects ?? current.researchProjects,

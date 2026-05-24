@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { PortfolioContent, ResourceLink } from "@/components/portfolio/types";
+import type { FocusArea, PortfolioContent, ResourceLink } from "@/components/portfolio/types";
 import { getTheGuyserApiBaseUrl, getTheGuyserWorkspaceId } from "@/lib/theguyser-config";
 import {
   buildTheGuyserPortfolioData,
@@ -12,15 +12,23 @@ export type TheGuyserSerializablePortfolioData = Pick<
   PortfolioContent,
   "gameProjects" | "profile" | "researchProjects" | "showreelItems"
 > & {
+  focusAreas: TheGuyserSerializableFocusArea[];
   resourceLinks: TheGuyserSerializableResourceLink[];
 };
 
+export type TheGuyserSerializableFocusArea = Omit<FocusArea, "icon">;
 export type TheGuyserSerializableResourceLink = Omit<ResourceLink, "icon">;
 
 function toSerializablePortfolioData(
   content: PortfolioContent,
 ): TheGuyserSerializablePortfolioData {
   return {
+    focusAreas: content.focusAreas.map((area) => ({
+      bg: area.bg,
+      color: area.color,
+      description: area.description,
+      title: area.title,
+    })),
     gameProjects: content.gameProjects,
     profile: content.profile,
     researchProjects: content.researchProjects,

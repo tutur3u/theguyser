@@ -98,6 +98,57 @@ describe("theguyser content delivery normalization", () => {
             slug: "experience",
             title: "Experience",
           },
+          {
+            collection_type: "awards",
+            config: {},
+            description: null,
+            entries: [
+              {
+                assets: [],
+                blocks: [],
+                id: "focus-entry",
+                metadata: {},
+                profile_data: {
+                  bg: "bg-sky-100",
+                  color: "text-sky-500",
+                },
+                published_at: "2026-05-09T00:00:00.000Z",
+                slug: "systems-design",
+                status: "published",
+                subtitle: null,
+                summary: "CMS-managed focus copy.",
+                title: "Systems Design",
+              },
+            ],
+            id: "awards",
+            slug: "awards",
+            title: "Awards & Focus",
+          },
+          {
+            collection_type: "showreel",
+            config: {},
+            description: null,
+            entries: [
+              {
+                assets: [],
+                blocks: [],
+                id: "showreel-entry",
+                metadata: {},
+                profile_data: {
+                  label: "CMS Showreel Item",
+                },
+                published_at: "2026-05-09T00:00:00.000Z",
+                slug: "cms-showreel-item",
+                status: "published",
+                subtitle: null,
+                summary: null,
+                title: "Fallback Showreel Title",
+              },
+            ],
+            id: "showreel",
+            slug: "showreel",
+            title: "Showreel",
+          },
         ],
         generatedAt: "2026-05-09T00:00:00.000Z",
         loadingData: null,
@@ -127,6 +178,12 @@ describe("theguyser content delivery normalization", () => {
       }),
     ]);
     expect(content.researchProjects).toHaveLength(0);
-    expect(content.showreelItems).toEqual(["Example Game"]);
+    expect(content.focusAreas[0]).toMatchObject({
+      bg: "bg-sky-100",
+      color: "text-sky-500",
+      description: "CMS-managed focus copy.",
+      title: "Systems Design",
+    });
+    expect(content.showreelItems).toEqual(["CMS Showreel Item"]);
   });
 });

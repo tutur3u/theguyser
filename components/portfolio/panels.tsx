@@ -62,6 +62,16 @@ function ThemeOptionButton({
   );
 }
 
+function getDrivePreviewUrl(href: string) {
+  const match = href.match(/\/file\/d\/([^/]+)/);
+
+  if (!match?.[1]) {
+    return RESUME_PREVIEW_URL;
+  }
+
+  return `https://drive.google.com/file/d/${match[1]}/preview`;
+}
+
 function QuickLaunchCard({
   accent,
   description,
@@ -109,6 +119,11 @@ export function PortfolioPanels({
   options: AppRenderOptions;
 }) {
   const { focusAreas, gameProjects, profile, researchProjects, resourceLinks, showreelItems } = content;
+  const resumeResource =
+    resourceLinks.find((resource) => resource.appId === "resume") ??
+    resourceLinks.find((resource) => resource.id === "resume");
+  const resumeViewUrl = resumeResource?.href ?? RESUME_VIEW_URL;
+  const resumePreviewUrl = getDrivePreviewUrl(resumeViewUrl);
 
   switch (id) {
     case "disc":
@@ -428,7 +443,7 @@ export function PortfolioPanels({
 
               <div className="space-y-3">
                 <ExternalAction
-                  href={RESUME_VIEW_URL}
+                  href={resumeViewUrl}
                   label="Open In New Tab"
                   className="w-full bg-gray-900 py-4 text-white dark:bg-gray-100 dark:text-gray-900"
                 />
@@ -451,7 +466,7 @@ export function PortfolioPanels({
                 </p>
               </div>
               <iframe
-                src={RESUME_PREVIEW_URL}
+                src={resumePreviewUrl}
                 title="Bao Chua CV preview"
                 className="h-[60vh] w-full bg-gray-100 dark:bg-gray-900 md:h-full md:min-h-0 md:flex-1"
                 allow="autoplay"

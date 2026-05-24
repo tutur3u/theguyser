@@ -47,4 +47,26 @@ describe("theguyser admin assets", () => {
       }),
     ).toEqual(["https://cdn.example/reused.png"]);
   });
+
+  test("normalizes platform-relative asset URLs for external admin apps", () => {
+    expect(
+      getTheGuyserAdminAssetSources(
+        {
+          asset_url: "/api/v1/workspaces/ws-1/external-projects/assets/asset-1",
+          id: "asset-1",
+          preview_url:
+            "/api/v1/workspaces/ws-1/external-projects/assets/asset-1?width=1200",
+          source_url: "/workspaces/ws-1/external-projects/assets/source",
+        },
+        {
+          apiBaseUrl: "https://platform.example.com/api/v1",
+        },
+      ),
+    ).toEqual([
+      "/api/admin/assets/asset-1?width=1600&height=1600&resize=cover&quality=82",
+      "https://platform.example.com/api/v1/workspaces/ws-1/external-projects/assets/asset-1?width=1200",
+      "https://platform.example.com/api/v1/workspaces/ws-1/external-projects/assets/asset-1",
+      "https://platform.example.com/api/v1/workspaces/ws-1/external-projects/assets/source",
+    ]);
+  });
 });
