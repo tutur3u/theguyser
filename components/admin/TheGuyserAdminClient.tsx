@@ -1,8 +1,24 @@
 "use client";
 
 import { TheGuyserAdminMediaImage } from "@/components/admin/TheGuyserAdminMediaImage";
-import { TheGuyserAdminSchemaFields } from "@/components/admin/TheGuyserAdminSchemaFields";
+import { TheGuyserAdminFieldEditor } from "@/components/admin/TheGuyserAdminFieldEditor";
 import { TheGuyserAdminSyncPanel } from "@/components/admin/TheGuyserAdminSyncPanel";
+import {
+  buildTheGuyserCollectionConfigFieldDescriptors,
+  buildTheGuyserEntryFieldDescriptors,
+  getTheGuyserCollectionSchemaConfig,
+  setTheGuyserCollectionSchemaValue,
+  setTheGuyserFieldValue,
+  type TheGuyserAdminFieldDescriptor,
+} from "@/lib/theguyser-admin-fields";
+import {
+  buildTheGuyserAdminDraftPortfolioContent,
+  THEGUYSER_ADMIN_PREVIEW_MESSAGE,
+  type TheGuyserAdminAssetDraftPreview,
+  type TheGuyserAdminCollectionDraftPreview,
+  type TheGuyserAdminEntryDraftPreview,
+  type TheGuyserAdminPreviewMessage,
+} from "@/lib/theguyser-admin-preview";
 import type {
   JsonObject,
   TheGuyserAdminAsset,
@@ -15,12 +31,17 @@ import type {
 import {
   ArrowUpRight,
   Check,
+  Code2,
   Copy,
   Eye,
   FileText,
+  ImageIcon,
   Layers,
+  Link as LinkIcon,
   LoaderCircle,
   LogOut,
+  Monitor,
+  Palette,
   Plus,
   RefreshCw,
   Save,
@@ -29,7 +50,8 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import type { PortfolioContent } from "@/components/portfolio/types";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 type AdminLink = {
   actionLabel: string;
@@ -50,6 +72,15 @@ type EntryDraft = {
   subtitle: string;
   summary: string;
   title: string;
+};
+
+type AssetDraft = {
+  altText: string;
+  assetType: string;
+  metadataText: string;
+  sortOrder: string;
+  sourceUrl: string;
+  storagePath: string;
 };
 
 type CollectionDraft = {
@@ -121,6 +152,14 @@ function parseJsonObject(value: string, label: string): JsonObject {
   }
 
   return parsed as JsonObject;
+}
+
+function parseJsonObjectSafe(value: string): JsonObject | null {
+  try {
+    return parseJsonObject(value, "JSON");
+  } catch {
+    return null;
+  }
 }
 
 function toDatetimeLocal(value: string | null) {
@@ -198,6 +237,17 @@ function getEntryDraft(entry: TheGuyserAdminEntry, blocks: TheGuyserAdminBlock[]
     subtitle: entry.subtitle ?? "",
     summary: entry.summary ?? "",
     title: entry.title,
+  };
+}
+
+function getAssetDraft(asset: TheGuyserAdminAsset | null | undefined): AssetDraft {
+  return {
+    altText: asset?.alt_text ?? "",
+    assetType: asset?.asset_type ?? "image",
+    metadataText: stringifyJson(asset?.metadata),
+    sortOrder: String(asset?.sort_order ?? 0),
+    sourceUrl: asset?.source_url ?? asset?.asset_url ?? asset?.preview_url ?? "",
+    storagePath: asset?.storage_path ?? "",
   };
 }
 
@@ -307,6 +357,149 @@ function TextArea({
   );
 }
 
+function TheGuyserAdminFullSitePreview({ content }: { content: PortfolioContent }) {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  const postPreview = useCallback(() => {
+    const message = {
+      content,
+      type: THEGUYSER_ADMIN_PREVIEW_MESSAGE,
+    } satisfies TheGuyserAdminPreviewMessage;
+
+    iframeRef.current?.contentWindow?.postMessage(message, window.location.origin);
+  }, [content]);
+
+  useEffect(() => {
+    postPreview();
+  }, [postPreview]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin === window.location.origin && event.data?.type === "theguyser:admin-preview-ready") {
+        postPreview();
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [postPreview]);
+
+  return (
+    <details className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-slate-900 dark:text-white">
+        <span className="inline-flex items-center gap-2 text-lg font-black">
+          <Monitor className="size-5 text-sky-500" />
+          Full-site draft preview
+        </span>
+        <span className="text-xs font-bold text-slate-400">unsaved draft</span>
+      </summary>
+      <div className="border-t border-slate-200 bg-slate-950 p-3 dark:border-slate-800">
+        <iframe
+          className="h-[42rem] w-full rounded-2xl border border-slate-800 bg-white"
+          onLoad={postPreview}
+          ref={iframeRef}
+          src="/admin/preview"
+          title="TheGuyser full-site draft preview"
+        />
+      </div>
+    </details>
+  );
+}
+
+function EntryInlinePreview({
+  apiBaseUrl,
+  asset,
+  assetDraft,
+  collectionSlug,
+  draft,
+}: {
+  apiBaseUrl: string;
+  asset: TheGuyserAdminAsset | undefined;
+  assetDraft: AssetDraft;
+  collectionSlug: string;
+  draft: EntryDraft;
+}) {
+  const profileData = parseJsonObjectSafe(draft.profileDataText) ?? {};
+  const imageUrl = assetDraft.sourceUrl.trim();
+  const previewAsset = asset
+    ? {
+        ...asset,
+        alt_text: assetDraft.altText.trim() || draft.title,
+        asset_url: imageUrl || asset.asset_url,
+        preview_url: imageUrl || asset.preview_url,
+        source_url: imageUrl || asset.source_url,
+      }
+    : null;
+  const heading = draft.title.trim() || "Untitled";
+  const summary = draft.summary.trim();
+
+  return (
+    <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="inline-flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
+          <Eye className="size-4 text-sky-500" />
+          Inline preview
+        </div>
+        <span className="rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-black text-slate-400 dark:border-slate-800">{collectionSlug}</span>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        {collectionSlug === "navigation" ? (
+          <div className="grid gap-3 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-lg font-black text-slate-900 dark:text-white">{heading}</span>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-500 dark:bg-slate-800">{profileData.visible === false ? "Hidden" : "Visible"}</span>
+            </div>
+            <p className="font-mono text-xs text-slate-400">{String(profileData.appId ?? draft.slug)}</p>
+          </div>
+        ) : collectionSlug === "quick-launch" ? (
+          <div className="grid gap-2 p-4">
+            <span className="text-xs font-black text-sky-500">{String(profileData.label ?? "Launch")}</span>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">{heading}</h3>
+            <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">{summary || "No description yet."}</p>
+          </div>
+        ) : collectionSlug === "experience" ? (
+          <div className="grid sm:grid-cols-[9rem_minmax(0,1fr)]">
+            <div className="relative min-h-44 bg-slate-950">
+              <TheGuyserAdminMediaImage alt={assetDraft.altText || heading} apiBaseUrl={apiBaseUrl} asset={previewAsset} />
+            </div>
+            <div className="grid content-center gap-2 p-4">
+              <span className="text-xs font-black text-sky-500">{String(profileData.category ?? "Project")}</span>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white">{heading}</h3>
+              <p className="line-clamp-3 text-sm leading-6 text-slate-500 dark:text-slate-400">{summary || draft.blockMarkdownText || "No project summary yet."}</p>
+              <span className="text-xs font-bold text-slate-400">{String(profileData.actionLabel ?? "Open")}</span>
+            </div>
+          </div>
+        ) : collectionSlug === "awards" ? (
+          <div className="grid gap-2 p-4">
+            <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-800"><Palette className="size-5" /></span>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">{heading}</h3>
+            <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">{summary || "No focus description yet."}</p>
+          </div>
+        ) : collectionSlug === "contact-social" ? (
+          <div className="flex items-center gap-3 p-4">
+            <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 dark:bg-sky-950"><LinkIcon className="size-5" /></span>
+            <div>
+              <h3 className="font-black text-slate-900 dark:text-white">{heading}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{String(profileData.note ?? profileData.href ?? "No link set")}</p>
+            </div>
+          </div>
+        ) : collectionSlug === "site-config" ? (
+          <div className="grid gap-2 p-4 text-sm">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">{String(profileData.discTitle ?? heading)}</h3>
+            <p className="text-slate-500 dark:text-slate-400">Start label: {String(profileData.startLabel ?? "START")}</p>
+            <p className="text-slate-500 dark:text-slate-400">Theme: {String(profileData.defaultTheme ?? "system")}</p>
+          </div>
+        ) : (
+          <div className="grid gap-2 p-4">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">{heading}</h3>
+            <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">{summary || draft.blockMarkdownText || "No previewable content yet."}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function EntryEditor({
   apiBaseUrl,
   assets,
@@ -316,8 +509,10 @@ function EntryEditor({
   entry,
   isPublishing,
   isSaving,
+  onDraftChange,
   onPublish,
   onSave,
+  onSaveAsset,
   onSaveBlock,
 }: {
   apiBaseUrl: string;
@@ -328,7 +523,14 @@ function EntryEditor({
   entry: TheGuyserAdminEntry;
   isPublishing: boolean;
   isSaving: boolean;
+  onDraftChange: (
+    entryId: string,
+    entryDraft: TheGuyserAdminEntryDraftPreview,
+    assetId: string | null,
+    assetDraft: TheGuyserAdminAssetDraftPreview | null,
+  ) => void;
   onPublish: (entryId: string, eventKind: "publish" | "unpublish") => void;
+  onSaveAsset: (assetId: string, payload: Record<string, unknown>) => void;
   onSaveBlock: (payload: {
     blockId: string | null;
     entryId: string;
@@ -339,11 +541,78 @@ function EntryEditor({
   const [draft, setDraft] = useState(() => getEntryDraft(entry, blocks));
   const [jsonError, setJsonError] = useState<string | null>(null);
   const primaryAsset = getPrimaryAsset(entry, assets);
+  const [assetDraft, setAssetDraft] = useState(() => getAssetDraft(primaryAsset));
   const markdownBlock = getEntryMarkdownBlock(entry, blocks);
+  const profileData = useMemo(
+    () => parseJsonObjectSafe(draft.profileDataText) ?? entry.profile_data,
+    [draft.profileDataText, entry.profile_data],
+  );
+  const metadata = useMemo(
+    () => parseJsonObjectSafe(draft.metadataText) ?? entry.metadata,
+    [draft.metadataText, entry.metadata],
+  );
+  const assetMetadata = useMemo(
+    () => parseJsonObjectSafe(assetDraft.metadataText) ?? primaryAsset?.metadata ?? {},
+    [assetDraft.metadataText, primaryAsset?.metadata],
+  );
+  const fieldDescriptors = useMemo(
+    () =>
+      buildTheGuyserEntryFieldDescriptors({
+        collectionSlug,
+        metadata,
+        profileData,
+      }),
+    [collectionSlug, metadata, profileData],
+  );
 
   const setDraftValue = (key: keyof EntryDraft, value: string) => {
     setDraft((current) => ({ ...current, [key]: value }));
   };
+
+  const setAssetDraftValue = (key: keyof AssetDraft, value: string) => {
+    setAssetDraft((current) => ({ ...current, [key]: value }));
+  };
+
+  const setStructuredField = (descriptor: TheGuyserAdminFieldDescriptor, value: unknown) => {
+    if (descriptor.scope === "profileData") {
+      setDraftValue("profileDataText", stringifyJson(setTheGuyserFieldValue(profileData, descriptor, value)));
+      return;
+    }
+
+    if (descriptor.scope === "metadata") {
+      setDraftValue("metadataText", stringifyJson(setTheGuyserFieldValue(metadata, descriptor, value)));
+    }
+  };
+
+  useEffect(() => {
+    onDraftChange(
+      entry.id,
+      {
+        blockMarkdownText: draft.blockMarkdownText,
+        metadata,
+        profileData,
+        scheduled_for: fromDatetimeLocal(draft.scheduledFor),
+        slug: draft.slug.trim(),
+        status: draft.status,
+        subtitle: draft.subtitle.trim() || null,
+        summary: draft.summary.trim() || null,
+        title: draft.title.trim(),
+      },
+      primaryAsset?.id ?? null,
+      primaryAsset
+        ? {
+            alt_text: assetDraft.altText.trim() || null,
+            asset_type: assetDraft.assetType.trim() || "image",
+            asset_url: assetDraft.sourceUrl.trim() || null,
+            metadata: assetMetadata,
+            preview_url: assetDraft.sourceUrl.trim() || null,
+            sort_order: Number(assetDraft.sortOrder) || 0,
+            source_url: assetDraft.sourceUrl.trim() || null,
+            storage_path: assetDraft.storagePath.trim() || null,
+          }
+        : null,
+    );
+  }, [assetDraft, assetMetadata, draft, entry.id, metadata, onDraftChange, primaryAsset, profileData]);
 
   const saveEntry = () => {
     try {
@@ -360,6 +629,26 @@ function EntryEditor({
       });
     } catch (error) {
       setJsonError(error instanceof Error ? error.message : "Invalid JSON payload.");
+    }
+  };
+
+  const saveAsset = () => {
+    if (!primaryAsset) {
+      return;
+    }
+
+    try {
+      setJsonError(null);
+      onSaveAsset(primaryAsset.id, {
+        alt_text: assetDraft.altText.trim() || null,
+        asset_type: assetDraft.assetType.trim() || "image",
+        metadata: parseJsonObject(assetDraft.metadataText, "Asset metadata"),
+        sort_order: Number(assetDraft.sortOrder) || 0,
+        source_url: assetDraft.sourceUrl.trim() || null,
+        storage_path: assetDraft.storagePath.trim() || null,
+      });
+    } catch (error) {
+      setJsonError(error instanceof Error ? error.message : "Invalid asset JSON payload.");
     }
   };
 
@@ -385,6 +674,61 @@ function EntryEditor({
           <div className="flex items-center justify-between gap-3">
             <span>Updated</span>
             <span className="text-right">{formatDate(entry.updated_at)}</span>
+          </div>
+        </div>
+        <div className="mt-5">
+          <EntryInlinePreview
+            apiBaseUrl={apiBaseUrl}
+            asset={primaryAsset}
+            assetDraft={assetDraft}
+            collectionSlug={collectionSlug}
+            draft={draft}
+          />
+        </div>
+        <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
+              <ImageIcon className="size-4 text-sky-500" />
+              Media
+            </div>
+            {primaryAsset ? (
+              <AdminButton disabled={isSaving} onClick={saveAsset}>
+                {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
+                Save media
+              </AdminButton>
+            ) : null}
+          </div>
+          {primaryAsset ? (
+            <div className="grid gap-3">
+              <Field label="Alt text">
+                <TextInput onChange={(value) => setAssetDraftValue("altText", value)} value={assetDraft.altText} />
+              </Field>
+              <Field label="Source URL">
+                <TextInput onChange={(value) => setAssetDraftValue("sourceUrl", value)} value={assetDraft.sourceUrl} />
+              </Field>
+              <Field label="Storage path">
+                <TextInput onChange={(value) => setAssetDraftValue("storagePath", value)} value={assetDraft.storagePath} />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Type">
+                  <TextInput onChange={(value) => setAssetDraftValue("assetType", value)} value={assetDraft.assetType} />
+                </Field>
+                <Field label="Sort">
+                  <TextInput onChange={(value) => setAssetDraftValue("sortOrder", value)} value={assetDraft.sortOrder} />
+                </Field>
+              </div>
+              <details className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                <summary className="cursor-pointer text-sm font-black text-slate-700 dark:text-slate-200">Asset metadata JSON</summary>
+                <div className="mt-3">
+                  <TextArea minRows={4} onChange={(value) => setAssetDraftValue("metadataText", value)} value={assetDraft.metadataText} />
+                </div>
+              </details>
+            </div>
+          ) : (
+            <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">No image asset is attached to this entry yet.</p>
+          )}
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            WebGL packages: {assets.filter((assetItem) => assetItem.entry_id === entry.id && assetItem.asset_type === "webgl-package").length}
           </div>
         </div>
       </div>
@@ -467,10 +811,10 @@ function EntryEditor({
               value={draft.summary}
             />
           </Field>
-          <TheGuyserAdminSchemaFields
-            collectionSlug={collectionSlug}
-            onChange={(value) => setDraftValue("profileDataText", value)}
-            profileDataText={draft.profileDataText}
+          <TheGuyserAdminFieldEditor
+            descriptors={fieldDescriptors}
+            onValueChange={setStructuredField}
+            values={{ metadata, profileData }}
           />
           <div className="md:col-span-2">
             <div className="mb-2 flex items-center justify-between gap-3">
@@ -497,16 +841,20 @@ function EntryEditor({
               value={draft.blockMarkdownText}
             />
           </div>
-          <div className="md:col-span-2">
-            <Field label="Profile data">
-              <TextArea minRows={8} onChange={(value) => setDraftValue("profileDataText", value)} value={draft.profileDataText} />
-            </Field>
-          </div>
-          <div className="md:col-span-2">
-            <Field label="Metadata">
-              <TextArea minRows={6} onChange={(value) => setDraftValue("metadataText", value)} value={draft.metadataText} />
-            </Field>
-          </div>
+          <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50 md:col-span-2">
+            <summary className="flex cursor-pointer items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
+              <Code2 className="size-4" />
+              Advanced JSON
+            </summary>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <Field label="Profile data JSON">
+                <TextArea minRows={8} onChange={(value) => setDraftValue("profileDataText", value)} value={draft.profileDataText} />
+              </Field>
+              <Field label="Metadata JSON">
+                <TextArea minRows={8} onChange={(value) => setDraftValue("metadataText", value)} value={draft.metadataText} />
+              </Field>
+            </div>
+          </details>
         </div>
       </div>
     </section>
@@ -516,14 +864,41 @@ function EntryEditor({
 function CollectionEditor({
   collection,
   isSaving,
+  onDraftChange,
   onSave,
 }: {
   collection: TheGuyserAdminCollection;
   isSaving: boolean;
+  onDraftChange: (collectionId: string, draft: TheGuyserAdminCollectionDraftPreview) => void;
   onSave: (collectionId: string, payload: Record<string, unknown>) => void;
 }) {
   const [draft, setDraft] = useState(() => getCollectionDraft(collection));
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const config = useMemo(
+    () => parseJsonObjectSafe(draft.configText) ?? collection.config,
+    [collection.config, draft.configText],
+  );
+  const configDescriptors = useMemo(
+    () => buildTheGuyserCollectionConfigFieldDescriptors({ config }),
+    [config],
+  );
+
+  const setConfigField = (descriptor: TheGuyserAdminFieldDescriptor, value: unknown) => {
+    setDraft((current) => ({
+      ...current,
+      configText: stringifyJson(setTheGuyserCollectionSchemaValue(config, descriptor, value)),
+    }));
+  };
+
+  useEffect(() => {
+    onDraftChange(collection.id, {
+      config,
+      description: draft.description.trim() || null,
+      is_enabled: draft.isEnabled,
+      slug: draft.slug.trim(),
+      title: draft.title.trim(),
+    });
+  }, [collection.id, config, draft.description, draft.isEnabled, draft.slug, draft.title, onDraftChange]);
 
   const saveCollection = () => {
     try {
@@ -589,11 +964,20 @@ function CollectionEditor({
             {draft.isEnabled ? "Enabled" : "Disabled"}
           </button>
         </div>
-        <div className="md:col-span-2">
-          <Field label="Config">
+        <TheGuyserAdminFieldEditor
+          descriptors={configDescriptors}
+          onValueChange={setConfigField}
+          values={{ config: getTheGuyserCollectionSchemaConfig(config).schema }}
+        />
+        <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50 md:col-span-2">
+          <summary className="flex cursor-pointer items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
+            <Code2 className="size-4" />
+            Advanced config JSON
+          </summary>
+          <div className="mt-4">
             <TextArea minRows={7} onChange={(value) => setDraft((current) => ({ ...current, configText: value }))} value={draft.configText} />
-          </Field>
-        </div>
+          </div>
+        </details>
       </div>
     </section>
   );
@@ -626,8 +1010,11 @@ export function TheGuyserAdminClient({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<
-    "block" | "collection" | "entry" | "publish" | "refresh" | null
+    "asset" | "block" | "collection" | "entry" | "publish" | "refresh" | null
   >(null);
+  const [entryDrafts, setEntryDrafts] = useState<Record<string, TheGuyserAdminEntryDraftPreview>>({});
+  const [assetDrafts, setAssetDrafts] = useState<Record<string, TheGuyserAdminAssetDraftPreview>>({});
+  const [collectionDrafts, setCollectionDrafts] = useState<Record<string, TheGuyserAdminCollectionDraftPreview>>({});
   const advancedLink = adminLinks.find((link) => link.key === initialTarget) ?? adminLinks[0];
 
   const filteredEntries = useMemo(
@@ -652,6 +1039,39 @@ export function TheGuyserAdminClient({
       scheduled: studio.entries.filter((entry) => entry.status === "scheduled").length,
     }),
     [studio.entries],
+  );
+  const draftPreviewContent = useMemo(
+    () =>
+      buildTheGuyserAdminDraftPortfolioContent({
+        apiBaseUrl,
+        assetDrafts,
+        collectionDrafts,
+        entryDrafts,
+        studio,
+      }),
+    [apiBaseUrl, assetDrafts, collectionDrafts, entryDrafts, studio],
+  );
+
+  const updateEntryPreviewDraft = useCallback(
+    (
+      entryId: string,
+      entryDraft: TheGuyserAdminEntryDraftPreview,
+      assetId: string | null,
+      assetDraft: TheGuyserAdminAssetDraftPreview | null,
+    ) => {
+      setEntryDrafts((current) => ({ ...current, [entryId]: entryDraft }));
+      if (assetId && assetDraft) {
+        setAssetDrafts((current) => ({ ...current, [assetId]: assetDraft }));
+      }
+    },
+    [],
+  );
+
+  const updateCollectionPreviewDraft = useCallback(
+    (collectionId: string, draft: TheGuyserAdminCollectionDraftPreview) => {
+      setCollectionDrafts((current) => ({ ...current, [collectionId]: draft }));
+    },
+    [],
   );
 
   useEffect(() => {
@@ -685,6 +1105,26 @@ export function TheGuyserAdminClient({
       setStatusMessage("Entry saved.");
     } catch (error) {
       setMutationError(error instanceof Error ? error.message : "Failed to save entry.");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const saveAsset = async (assetId: string, payload: Record<string, unknown>) => {
+    setPendingAction("asset");
+    setMutationError(null);
+    try {
+      const asset = await fetchAdminJson<TheGuyserAdminAsset>(`/api/admin/assets/${encodeURIComponent(assetId)}`, {
+        body: JSON.stringify(payload),
+        method: "PATCH",
+      });
+      setStudio((current) => ({
+        ...current,
+        assets: current.assets.map((item) => (item.id === asset.id ? asset : item)),
+      }));
+      setStatusMessage("Media saved.");
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : "Failed to save media.");
     } finally {
       setPendingAction(null);
     }
@@ -1070,6 +1510,7 @@ export function TheGuyserAdminClient({
           </aside>
 
           <main className="grid gap-5">
+            <TheGuyserAdminFullSitePreview content={draftPreviewContent} />
             {selectedEntry ? (
               <EntryEditor
                 assets={studio.assets}
@@ -1079,10 +1520,12 @@ export function TheGuyserAdminClient({
                 collectionTitle={getCollectionTitle(studio.collections, selectedEntry.collection_id)}
                 entry={selectedEntry}
                 isPublishing={pendingAction === "publish"}
-                isSaving={pendingAction === "entry" || pendingAction === "block"}
+                isSaving={pendingAction === "entry" || pendingAction === "block" || pendingAction === "asset"}
                 key={`${selectedEntry.id}:${selectedEntry.updated_at ?? ""}:${selectedEntry.status}`}
+                onDraftChange={updateEntryPreviewDraft}
                 onPublish={(entryId, eventKind) => void publishEntry(entryId, eventKind)}
                 onSave={(entryId, payload) => void saveEntry(entryId, payload)}
+                onSaveAsset={(assetId, payload) => void saveAsset(assetId, payload)}
                 onSaveBlock={(payload) => void saveBlock(payload)}
               />
             ) : (
@@ -1099,6 +1542,7 @@ export function TheGuyserAdminClient({
                 collection={selectedCollection}
                 isSaving={pendingAction === "collection"}
                 key={`${selectedCollection.id}:${selectedCollection.updated_at ?? ""}`}
+                onDraftChange={updateCollectionPreviewDraft}
                 onSave={(collectionId, payload) => void saveCollection(collectionId, payload)}
               />
             ) : null}
