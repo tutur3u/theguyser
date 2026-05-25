@@ -92,7 +92,21 @@ type CollectionDraft = {
   title: string;
 };
 
+type EntryEditorTab = "content" | "fields" | "media" | "preview" | "advanced";
+
 const ENTRY_STATUSES: TheGuyserEntryStatus[] = ["draft", "scheduled", "published", "archived"];
+
+const ENTRY_EDITOR_TABS = [
+  { icon: FileText, id: "content", label: "Content" },
+  { icon: Settings2, id: "fields", label: "Fields" },
+  { icon: ImageIcon, id: "media", label: "Media" },
+  { icon: Eye, id: "preview", label: "Preview" },
+  { icon: Code2, id: "advanced", label: "Advanced" },
+] as const satisfies ReadonlyArray<{
+  icon: typeof FileText;
+  id: EntryEditorTab;
+  label: string;
+}>;
 
 function mergeEntry(studio: TheGuyserAdminStudioPayload, entry: TheGuyserAdminEntry) {
   const exists = studio.entries.some((item) => item.id === entry.id);
@@ -358,8 +372,15 @@ function TextArea({
   );
 }
 
-function TheGuyserAdminFullSitePreview({ content }: { content: PortfolioContent }) {
+function TheGuyserAdminFullSitePreview({
+  content,
+  defaultOpen = false,
+}: {
+  content: PortfolioContent;
+  defaultOpen?: boolean;
+}) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const postPreview = useCallback(() => {
     const message = {
@@ -386,7 +407,11 @@ function TheGuyserAdminFullSitePreview({ content }: { content: PortfolioContent 
   }, [postPreview]);
 
   return (
-    <details className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <details
+      className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      onToggle={(event) => setIsOpen(event.currentTarget.open)}
+      open={isOpen}
+    >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-slate-900 dark:text-white">
         <span className="inline-flex items-center gap-2 text-lg font-black">
           <Monitor className="size-5 text-sky-500" />
@@ -507,6 +532,7 @@ function EntryEditor({
   blocks,
   collectionSlug,
   collectionTitle,
+  draftPreviewContent,
   entry,
   isPublishing,
   isSaving,
@@ -521,6 +547,7 @@ function EntryEditor({
   blocks: TheGuyserAdminBlock[];
   collectionSlug: string;
   collectionTitle: string;
+  draftPreviewContent: PortfolioContent;
   entry: TheGuyserAdminEntry;
   isPublishing: boolean;
   isSaving: boolean;
@@ -541,7 +568,11 @@ function EntryEditor({
 }) {
   const [draft, setDraft] = useState(() => getEntryDraft(entry, blocks));
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<EntryEditorTab>("content");
   const primaryAsset = getPrimaryAsset(entry, assets);
+  const webglPackageCount = assets.filter(
+    (assetItem) => assetItem.entry_id === entry.id && assetItem.asset_type === "webgl-package",
+  ).length;
   const [assetDraft, setAssetDraft] = useState(() => getAssetDraft(primaryAsset));
   const markdownBlock = getEntryMarkdownBlock(entry, blocks);
   const profileData = useMemo(
@@ -654,208 +685,254 @@ function EntryEditor({
   };
 
   return (
-    <section className="grid min-h-[44rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-      <div className="border-b border-slate-200 p-5 dark:border-slate-800 lg:border-r lg:border-b-0">
-        <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-          <TheGuyserAdminMediaImage
-            alt={primaryAsset?.alt_text ?? entry.title}
-            apiBaseUrl={apiBaseUrl}
-            asset={primaryAsset}
-          />
-        </div>
-        <div className="mt-5 space-y-3 text-sm text-slate-500 dark:text-slate-400">
-          <div className="flex items-center justify-between gap-3">
-            <span>Collection</span>
-            <span className="text-right font-black text-slate-900 dark:text-white">{collectionTitle}</span>
+    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="grid lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <aside className="border-b border-slate-200 p-5 dark:border-slate-800 lg:border-r lg:border-b-0">
+          <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+            <TheGuyserAdminMediaImage
+              alt={primaryAsset?.alt_text ?? entry.title}
+              apiBaseUrl={apiBaseUrl}
+              asset={primaryAsset}
+            />
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <span>Published</span>
-            <span className="text-right">{formatDate(entry.published_at)}</span>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <span>Updated</span>
-            <span className="text-right">{formatDate(entry.updated_at)}</span>
-          </div>
-        </div>
-        <div className="mt-5">
-          <EntryInlinePreview
-            apiBaseUrl={apiBaseUrl}
-            asset={primaryAsset}
-            assetDraft={assetDraft}
-            collectionSlug={collectionSlug}
-            draft={draft}
-          />
-        </div>
-        <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
-              <ImageIcon className="size-4 text-sky-500" />
-              Media
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950/50">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-slate-500 dark:text-slate-400">Collection</span>
+              <span className="text-right font-black text-slate-900 dark:text-white">{collectionTitle}</span>
             </div>
-            {primaryAsset ? (
-              <AdminButton disabled={isSaving} onClick={saveAsset}>
-                {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
-                Save media
-              </AdminButton>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="text-slate-500 dark:text-slate-400">Status</span>
+              <span className={`rounded-full border px-2.5 py-1 text-xs font-black ${getStatusClass(draft.status)}`}>{draft.status}</span>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 text-slate-500 dark:text-slate-400">
+              <span>Published</span>
+              <span className="text-right">{formatDate(entry.published_at)}</span>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 text-slate-500 dark:text-slate-400">
+              <span>Updated</span>
+              <span className="text-right">{formatDate(entry.updated_at)}</span>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 text-slate-500 dark:text-slate-400">
+              <span>WebGL</span>
+              <span className="text-right font-black text-slate-900 dark:text-white">{webglPackageCount}</span>
+            </div>
+          </div>
+        </aside>
+
+        <div className="min-w-0">
+          <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/92 p-5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/92">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white md:text-3xl">{draft.title || "Untitled entry"}</h2>
+                <p className="mt-2 break-all font-mono text-xs text-slate-400 dark:text-slate-500">{draft.slug || entry.slug}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <AdminButton disabled={isSaving} onClick={saveEntry} tone="primary">
+                  {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
+                  Save
+                </AdminButton>
+                {entry.status === "published" ? (
+                  <AdminButton disabled={isPublishing} onClick={() => onPublish(entry.id, "unpublish")} tone="danger">
+                    {isPublishing ? <LoaderCircle className="size-4 animate-spin" /> : <Undo2 className="size-4" />}
+                    Unpublish
+                  </AdminButton>
+                ) : (
+                  <AdminButton disabled={isPublishing} onClick={() => onPublish(entry.id, "publish")}>
+                    {isPublishing ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}
+                    Publish
+                  </AdminButton>
+                )}
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950/50">
+              {ENTRY_EDITOR_TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+
+                return (
+                  <button
+                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-black transition ${
+                      isActive
+                        ? "bg-white text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-200"
+                        : "text-slate-500 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+                    }`}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    type="button"
+                  >
+                    <Icon className="size-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            {jsonError ? (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-200">
+                {jsonError}
+              </div>
             ) : null}
           </div>
-          {primaryAsset ? (
-            <div className="grid gap-3">
-              <Field label="Alt text">
-                <TextInput onChange={(value) => setAssetDraftValue("altText", value)} value={assetDraft.altText} />
-              </Field>
-              <Field label="Source URL">
-                <TextInput onChange={(value) => setAssetDraftValue("sourceUrl", value)} value={assetDraft.sourceUrl} />
-              </Field>
-              <Field label="Storage path">
-                <TextInput onChange={(value) => setAssetDraftValue("storagePath", value)} value={assetDraft.storagePath} />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Type">
-                  <TextInput onChange={(value) => setAssetDraftValue("assetType", value)} value={assetDraft.assetType} />
+
+          <div className="p-5">
+            {activeTab === "content" ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Title">
+                  <TextInput onChange={(value) => setDraftValue("title", value)} value={draft.title} />
                 </Field>
-                <Field label="Sort">
-                  <TextInput onChange={(value) => setAssetDraftValue("sortOrder", value)} value={assetDraft.sortOrder} />
+                <Field label="Slug">
+                  <TextInput onChange={(value) => setDraftValue("slug", value)} value={draft.slug} />
                 </Field>
+                <Field label="Subtitle">
+                  <TextInput onChange={(value) => setDraftValue("subtitle", value)} value={draft.subtitle} />
+                </Field>
+                <Field label="Status">
+                  <select
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        status: event.target.value as TheGuyserEntryStatus,
+                      }))
+                    }
+                    value={draft.status}
+                  >
+                    {ENTRY_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Scheduled for">
+                  <input
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                    onChange={(event) => setDraftValue("scheduledFor", event.target.value)}
+                    type="datetime-local"
+                    value={draft.scheduledFor}
+                  />
+                </Field>
+                <Field label="Summary">
+                  <textarea
+                    className="min-h-[6rem] resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-sky-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                    onChange={(event) => setDraftValue("summary", event.target.value)}
+                    value={draft.summary}
+                  />
+                </Field>
+                <div className="md:col-span-2">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Markdown block</span>
+                    <AdminButton
+                      disabled={isSaving}
+                      onClick={() =>
+                        onSaveBlock({
+                          blockId: markdownBlock?.id ?? null,
+                          entryId: entry.id,
+                          markdown: draft.blockMarkdownText,
+                        })
+                      }
+                    >
+                      {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
+                      Save block
+                    </AdminButton>
+                  </div>
+                  <TextArea
+                    minRows={7}
+                    onChange={(value) => setDraftValue("blockMarkdownText", value)}
+                    value={draft.blockMarkdownText}
+                  />
+                </div>
               </div>
-              <details className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                <summary className="cursor-pointer text-sm font-black text-slate-700 dark:text-slate-200">Asset metadata JSON</summary>
-                <div className="mt-3">
-                  <TextArea minRows={4} onChange={(value) => setAssetDraftValue("metadataText", value)} value={assetDraft.metadataText} />
+            ) : null}
+
+            {activeTab === "fields" ? (
+              <TheGuyserAdminFieldEditor
+                descriptors={fieldDescriptors}
+                onValueChange={setStructuredField}
+                values={{ metadata, profileData }}
+              />
+            ) : null}
+
+            {activeTab === "media" ? (
+              <div className="grid gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="inline-flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
+                    <ImageIcon className="size-4 text-sky-500" />
+                    Media
+                  </div>
+                  {primaryAsset ? (
+                    <AdminButton disabled={isSaving} onClick={saveAsset}>
+                      {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
+                      Save media
+                    </AdminButton>
+                  ) : null}
+                </div>
+                {primaryAsset ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Alt text">
+                      <TextInput onChange={(value) => setAssetDraftValue("altText", value)} value={assetDraft.altText} />
+                    </Field>
+                    <Field label="Source URL">
+                      <TextInput onChange={(value) => setAssetDraftValue("sourceUrl", value)} value={assetDraft.sourceUrl} />
+                    </Field>
+                    <Field label="Storage path">
+                      <TextInput onChange={(value) => setAssetDraftValue("storagePath", value)} value={assetDraft.storagePath} />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Type">
+                        <TextInput onChange={(value) => setAssetDraftValue("assetType", value)} value={assetDraft.assetType} />
+                      </Field>
+                      <Field label="Sort">
+                        <TextInput onChange={(value) => setAssetDraftValue("sortOrder", value)} value={assetDraft.sortOrder} />
+                      </Field>
+                    </div>
+                    <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50 md:col-span-2">
+                      <summary className="cursor-pointer text-sm font-black text-slate-700 dark:text-slate-200">Asset metadata JSON</summary>
+                      <div className="mt-3">
+                        <TextArea minRows={4} onChange={(value) => setAssetDraftValue("metadataText", value)} value={assetDraft.metadataText} />
+                      </div>
+                    </details>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                    No image asset is attached to this entry yet.
+                  </div>
+                )}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400">
+                  WebGL packages: <span className="font-black text-slate-900 dark:text-white">{webglPackageCount}</span>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "preview" ? (
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
+                <EntryInlinePreview
+                  apiBaseUrl={apiBaseUrl}
+                  asset={primaryAsset}
+                  assetDraft={assetDraft}
+                  collectionSlug={collectionSlug}
+                  draft={draft}
+                />
+                <TheGuyserAdminFullSitePreview content={draftPreviewContent} defaultOpen />
+              </div>
+            ) : null}
+
+            {activeTab === "advanced" ? (
+              <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50" open>
+                <summary className="flex cursor-pointer items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
+                  <Code2 className="size-4" />
+                  Advanced JSON
+                </summary>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <Field label="Profile data JSON">
+                    <TextArea minRows={8} onChange={(value) => setDraftValue("profileDataText", value)} value={draft.profileDataText} />
+                  </Field>
+                  <Field label="Metadata JSON">
+                    <TextArea minRows={8} onChange={(value) => setDraftValue("metadataText", value)} value={draft.metadataText} />
+                  </Field>
                 </div>
               </details>
-            </div>
-          ) : (
-            <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">No image asset is attached to this entry yet.</p>
-          )}
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-            WebGL packages: {assets.filter((assetItem) => assetItem.entry_id === entry.id && assetItem.asset_type === "webgl-package").length}
+            ) : null}
           </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col">
-        <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/92 p-5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/92">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-xs font-black ${getStatusClass(entry.status)}`}>
-                {entry.status}
-              </span>
-              <h2 className="mt-3 text-3xl font-black text-slate-900 dark:text-white">{entry.title}</h2>
-              <p className="mt-2 break-all font-mono text-xs text-slate-400 dark:text-slate-500">{entry.slug}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <AdminButton disabled={isSaving} onClick={saveEntry} tone="primary">
-                {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
-                Save
-              </AdminButton>
-              {entry.status === "published" ? (
-                <AdminButton disabled={isPublishing} onClick={() => onPublish(entry.id, "unpublish")} tone="danger">
-                  {isPublishing ? <LoaderCircle className="size-4 animate-spin" /> : <Undo2 className="size-4" />}
-                  Unpublish
-                </AdminButton>
-              ) : (
-                <AdminButton disabled={isPublishing} onClick={() => onPublish(entry.id, "publish")}>
-                  {isPublishing ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}
-                  Publish
-                </AdminButton>
-              )}
-            </div>
-          </div>
-          {jsonError ? (
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-200">
-              {jsonError}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="grid gap-4 p-5 md:grid-cols-2">
-          <Field label="Title">
-            <TextInput onChange={(value) => setDraftValue("title", value)} value={draft.title} />
-          </Field>
-          <Field label="Slug">
-            <TextInput onChange={(value) => setDraftValue("slug", value)} value={draft.slug} />
-          </Field>
-          <Field label="Subtitle">
-            <TextInput onChange={(value) => setDraftValue("subtitle", value)} value={draft.subtitle} />
-          </Field>
-          <Field label="Status">
-            <select
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  status: event.target.value as TheGuyserEntryStatus,
-                }))
-              }
-              value={draft.status}
-            >
-              {ENTRY_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Scheduled for">
-            <input
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-              onChange={(event) => setDraftValue("scheduledFor", event.target.value)}
-              type="datetime-local"
-              value={draft.scheduledFor}
-            />
-          </Field>
-          <Field label="Summary">
-            <textarea
-              className="min-h-[6rem] resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-sky-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-              onChange={(event) => setDraftValue("summary", event.target.value)}
-              value={draft.summary}
-            />
-          </Field>
-          <TheGuyserAdminFieldEditor
-            descriptors={fieldDescriptors}
-            onValueChange={setStructuredField}
-            values={{ metadata, profileData }}
-          />
-          <div className="md:col-span-2">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                Markdown block
-              </span>
-              <AdminButton
-                disabled={isSaving}
-                onClick={() =>
-                  onSaveBlock({
-                    blockId: markdownBlock?.id ?? null,
-                    entryId: entry.id,
-                    markdown: draft.blockMarkdownText,
-                  })
-                }
-              >
-                {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
-                Save block
-              </AdminButton>
-            </div>
-            <TextArea
-              minRows={7}
-              onChange={(value) => setDraftValue("blockMarkdownText", value)}
-              value={draft.blockMarkdownText}
-            />
-          </div>
-          <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50 md:col-span-2">
-            <summary className="flex cursor-pointer items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
-              <Code2 className="size-4" />
-              Advanced JSON
-            </summary>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <Field label="Profile data JSON">
-                <TextArea minRows={8} onChange={(value) => setDraftValue("profileDataText", value)} value={draft.profileDataText} />
-              </Field>
-              <Field label="Metadata JSON">
-                <TextArea minRows={8} onChange={(value) => setDraftValue("metadataText", value)} value={draft.metadataText} />
-              </Field>
-            </div>
-          </details>
         </div>
       </div>
     </section>
@@ -922,7 +999,7 @@ function CollectionEditor({
         <div>
           <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
             <Settings2 className="size-4" />
-            <h2 className="text-xl font-black text-slate-900 dark:text-white">Collection settings</h2>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white">Collection details</h2>
           </div>
           <p className="mt-1 font-mono text-xs text-slate-400 dark:text-slate-500">{collection.collection_type}</p>
         </div>
@@ -965,11 +1042,19 @@ function CollectionEditor({
             {draft.isEnabled ? "Enabled" : "Disabled"}
           </button>
         </div>
-        <TheGuyserAdminFieldEditor
-          descriptors={configDescriptors}
-          onValueChange={setConfigField}
-          values={{ config: getTheGuyserCollectionSchemaConfig(config).schema }}
-        />
+        <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50 md:col-span-2">
+          <summary className="flex cursor-pointer items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
+            <Settings2 className="size-4" />
+            Content model
+          </summary>
+          <div className="mt-4">
+            <TheGuyserAdminFieldEditor
+              descriptors={configDescriptors}
+              onValueChange={setConfigField}
+              values={{ config: getTheGuyserCollectionSchemaConfig(config).schema }}
+            />
+          </div>
+        </details>
         <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50 md:col-span-2">
           <summary className="flex cursor-pointer items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
             <Code2 className="size-4" />
@@ -1511,7 +1596,6 @@ export function TheGuyserAdminClient({
           </aside>
 
           <main className="grid gap-5">
-            <TheGuyserAdminFullSitePreview content={draftPreviewContent} />
             {selectedEntry ? (
               <EntryEditor
                 assets={studio.assets}
@@ -1519,6 +1603,7 @@ export function TheGuyserAdminClient({
                 blocks={studio.blocks}
                 collectionSlug={selectedCollection?.slug ?? ""}
                 collectionTitle={getCollectionTitle(studio.collections, selectedEntry.collection_id)}
+                draftPreviewContent={draftPreviewContent}
                 entry={selectedEntry}
                 isPublishing={pendingAction === "publish"}
                 isSaving={pendingAction === "entry" || pendingAction === "block" || pendingAction === "asset"}
@@ -1539,25 +1624,41 @@ export function TheGuyserAdminClient({
             )}
 
             {selectedCollection ? (
-              <CollectionEditor
-                collection={selectedCollection}
-                isSaving={pendingAction === "collection"}
-                key={`${selectedCollection.id}:${selectedCollection.updated_at ?? ""}`}
-                onDraftChange={updateCollectionPreviewDraft}
-                onSave={(collectionId, payload) => void saveCollection(collectionId, payload)}
-              />
-            ) : null}
-            {selectedCollection ? (
-              <div className="flex justify-end">
-                <AdminButton
-                  disabled={pendingAction === "collection"}
-                  onClick={() => void deleteCollection()}
-                  tone="danger"
-                >
-                  <Trash2 className="size-4" />
-                  Delete collection
-                </AdminButton>
-              </div>
+              <details className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-sky-200 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-900">
+                  <span className="inline-flex min-w-0 items-center gap-3">
+                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-950 dark:text-slate-300">
+                      <Settings2 className="size-5" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-base font-black text-slate-900 dark:text-white">Collection settings</span>
+                      <span className="mt-1 block truncate font-mono text-xs text-slate-400 dark:text-slate-500">{selectedCollection.title}</span>
+                    </span>
+                  </span>
+                  <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-black text-slate-500 group-open:bg-slate-100 dark:border-slate-800 dark:text-slate-400 dark:group-open:bg-slate-950">
+                    Configure
+                  </span>
+                </summary>
+                <div className="mt-3 grid gap-3">
+                  <CollectionEditor
+                    collection={selectedCollection}
+                    isSaving={pendingAction === "collection"}
+                    key={`${selectedCollection.id}:${selectedCollection.updated_at ?? ""}`}
+                    onDraftChange={updateCollectionPreviewDraft}
+                    onSave={(collectionId, payload) => void saveCollection(collectionId, payload)}
+                  />
+                  <div className="flex justify-end">
+                    <AdminButton
+                      disabled={pendingAction === "collection"}
+                      onClick={() => void deleteCollection()}
+                      tone="danger"
+                    >
+                      <Trash2 className="size-4" />
+                      Delete collection
+                    </AdminButton>
+                  </div>
+                </div>
+              </details>
             ) : null}
           </main>
         </div>

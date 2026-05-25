@@ -74,6 +74,10 @@ export function TheGuyserAdminSyncPanel() {
     (summary?.create ?? 0) +
     (summary?.delete ?? 0) +
     (summary?.update ?? 0);
+  const missingGroups = coverage
+    ? Object.entries(coverage.missing).filter(([, items]) => items.length > 0)
+    : [];
+  const missingTotal = missingGroups.reduce((total, [, items]) => total + items.length, 0);
 
   const runDiff = async () => {
     setPendingAction("diff");
@@ -184,12 +188,17 @@ export function TheGuyserAdminSyncPanel() {
               </div>
             ))}
           </div>
-          {!coverage.complete ? (
-            <div className="mt-3 grid gap-2 md:grid-cols-2">
-              {Object.entries(coverage.missing)
-                .filter(([, items]) => items.length > 0)
-                .map(([group, items]) => (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100" key={group}>
+          {!coverage.complete && missingGroups.length > 0 ? (
+            <details className="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/30">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-amber-800 dark:text-amber-100">
+                <span className="font-black">Missing items</span>
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-black dark:bg-amber-950">
+                  {missingTotal}
+                </span>
+              </summary>
+              <div className="grid gap-2 border-t border-amber-200 p-2 dark:border-amber-900/60 md:grid-cols-2">
+                {missingGroups.map(([group, items]) => (
+                  <div className="rounded-lg border border-amber-200 bg-white px-2.5 py-2 text-amber-800 dark:border-amber-900/60 dark:bg-slate-950/50 dark:text-amber-100" key={group}>
                     <div className="font-black capitalize">{group.replace(/([A-Z])/g, " $1")}</div>
                     <div className="mt-1 line-clamp-2 text-xs opacity-80">
                       {items.slice(0, 5).join(", ")}
@@ -197,7 +206,8 @@ export function TheGuyserAdminSyncPanel() {
                     </div>
                   </div>
                 ))}
-            </div>
+              </div>
+            </details>
           ) : null}
         </div>
       ) : null}
