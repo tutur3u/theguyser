@@ -1,189 +1,207 @@
 import { describe, expect, test } from "bun:test";
-import { buildTheGuyserPortfolioData } from "@/lib/theguyser-content";
+import { DEFAULT_PORTFOLIO_CONTENT } from "@/components/portfolio/data";
+import { getTheGuyserCmsCoverageReport } from "@/lib/theguyser-cms-coverage";
+import { buildTheGuyserPortfolioData, type TheGuyserDeliveryPayload } from "@/lib/theguyser-content";
+import { theGuyserExternalProjectManifest } from "@/lib/theguyser-external-project-manifest";
+import { getTheGuyserGamePlayer } from "@/lib/theguyser-webgl";
+
+const API_BASE_URL = "https://tuturuuu.example/api/v1";
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function needsWebgl(entry: (typeof theGuyserExternalProjectManifest.content.entries)[number]) {
+  const profileData = asRecord(entry.profileData);
+  return profileData.requiresWebgl === true || String(profileData.playHref ?? "").startsWith("/games/");
+}
+
+function createDelivery({
+  includeWebgl = true,
+  mineBlastWebgl = false,
+}: {
+  includeWebgl?: boolean;
+  mineBlastWebgl?: boolean;
+} = {}): TheGuyserDeliveryPayload {
+  return {
+    adapter: "theguyser",
+    canonicalProjectId: "theguyser",
+    collections: theGuyserExternalProjectManifest.schema.collections.map((collectionSchema) => ({
+      collection_type: collectionSchema.collection_type,
+      config: {
+        schema: collectionSchema,
+      },
+      description: collectionSchema.description ?? null,
+      entries: theGuyserExternalProjectManifest.content.entries
+        .filter((entry) => entry.collectionSlug === collectionSchema.slug)
+        .map((entry) => {
+          const assets = (entry.assets ?? []).map((asset, index) => ({
+            alt_text: asset.altText ?? null,
+            assetUrl: asset.sourceUrl?.startsWith("http")
+              ? asset.sourceUrl
+              : `/api/v1/workspaces/ws-1/external-projects/assets/${entry.slug}-asset-${index}`,
+            asset_type: asset.assetType,
+            block_id: null,
+            entry_id: `${entry.stableSourceId}:id`,
+            id: `${entry.stableSourceId}:asset:${index}`,
+            metadata: asset.metadata ?? {},
+            sort_order: asset.sortOrder ?? index,
+            source_url: asset.sourceUrl ?? null,
+            stable_source_id: asset.stableSourceId,
+            storage_path: asset.storagePath ?? null,
+          }));
+
+          if ((includeWebgl && needsWebgl(entry)) || (mineBlastWebgl && entry.slug === "mine-blast")) {
+            assets.push({
+              alt_text: `${entry.title} WebGL package`,
+              assetUrl: null,
+              asset_type: "webgl-package",
+              block_id: null,
+              entry_id: `${entry.stableSourceId}:id`,
+              id: `${entry.stableSourceId}:webgl`,
+              metadata: {
+                entryUrl: `/api/v1/workspaces/ws-1/external-projects/assets/${entry.slug}-webgl/webgl/index.html`,
+                kind: "webgl-package",
+              },
+              sort_order: 10,
+              source_url: null,
+              stable_source_id: `${entry.stableSourceId}:webgl`,
+              storage_path: `external-projects/theguyser/games/${entry.slug}/webgl`,
+            });
+          }
+
+          return {
+            assets,
+            blocks: (entry.blocks ?? []).map((block, index) => ({
+              block_type: block.blockType,
+              content: block.content,
+              id: block.stableSourceId,
+              title: block.title ?? null,
+            })),
+            id: `${entry.stableSourceId}:id`,
+            metadata: entry.metadata ?? {},
+            profile_data: entry.profileData ?? {},
+            published_at: "2026-05-09T00:00:00.000Z",
+            slug: entry.slug,
+            stable_source_id: entry.stableSourceId,
+            status: entry.status ?? "published",
+            subtitle: entry.subtitle ?? null,
+            summary: entry.summary ?? null,
+            title: entry.title,
+          };
+        }),
+      id: collectionSchema.slug,
+      slug: collectionSchema.slug,
+      title: collectionSchema.title,
+    })),
+    generatedAt: "2026-05-09T00:00:00.000Z",
+    loadingData: null,
+    profileData: {},
+    workspaceId: "ws-1",
+  };
+}
 
 describe("theguyser content delivery normalization", () => {
-  test("maps Tuturuuu delivery collections into portfolio data", () => {
-    const content = buildTheGuyserPortfolioData(
-      {
-        adapter: "theguyser",
-        canonicalProjectId: "theguyser-main",
-        collections: [
-          {
-            collection_type: "panel-content",
-            config: {},
-            description: null,
-            entries: [
-              {
-                assets: [
-                  {
-                    alt_text: "Bao portrait",
-                    assetUrl: "/api/v1/workspaces/ws-1/external-projects/assets/profile-image",
-                    asset_type: "image",
-                    block_id: null,
-                    entry_id: "profile-entry",
-                    id: "profile-image",
-                    metadata: {},
-                    sort_order: 0,
-                    source_url: null,
-                    storage_path: "external-projects/theguyser/profile.jpg",
-                  },
-                ],
-                blocks: [
-                  {
-                    block_type: "markdown",
-                    content: {
-                      markdown: "Updated profile intro.",
-                    },
-                    id: "profile-block",
-                    title: null,
-                  },
-                ],
-                id: "profile-entry",
-                metadata: {},
-                profile_data: {
-                  email: "bao@example.com",
-                  role: "Designer",
-                },
-                published_at: "2026-05-09T00:00:00.000Z",
-                slug: "profile",
-                status: "published",
-                subtitle: null,
-                summary: "Updated profile summary.",
-                title: "Bao Chua",
-              },
-            ],
-            id: "panel-content",
-            slug: "panel-content",
-            title: "Panel Content",
-          },
-          {
-            collection_type: "experience",
-            config: {},
-            description: null,
-            entries: [
-              {
-                assets: [
-                  {
-                    alt_text: "Project art",
-                    assetUrl: "/api/v1/workspaces/ws-1/external-projects/assets/project-image",
-                    asset_type: "image",
-                    block_id: null,
-                    entry_id: "game-entry",
-                    id: "project-image",
-                    metadata: {},
-                    sort_order: 0,
-                    source_url: null,
-                    storage_path: "external-projects/theguyser/games/project.jpg",
-                  },
-                ],
-                blocks: [],
-                id: "game-entry",
-                metadata: {},
-                profile_data: {
-                  actionLabel: "Play",
-                  category: "Puzzle Game",
-                  href: "https://example.com/play",
-                  kind: "game",
-                  playHref: "/games/example",
-                },
-                published_at: "2026-05-09T00:00:00.000Z",
-                slug: "example-game",
-                status: "published",
-                subtitle: null,
-                summary: "A platform-managed game.",
-                title: "Example Game",
-              },
-            ],
-            id: "experience",
-            slug: "experience",
-            title: "Experience",
-          },
-          {
-            collection_type: "awards",
-            config: {},
-            description: null,
-            entries: [
-              {
-                assets: [],
-                blocks: [],
-                id: "focus-entry",
-                metadata: {},
-                profile_data: {
-                  bg: "bg-sky-100",
-                  color: "text-sky-500",
-                },
-                published_at: "2026-05-09T00:00:00.000Z",
-                slug: "systems-design",
-                status: "published",
-                subtitle: null,
-                summary: "CMS-managed focus copy.",
-                title: "Systems Design",
-              },
-            ],
-            id: "awards",
-            slug: "awards",
-            title: "Awards & Focus",
-          },
-          {
-            collection_type: "showreel",
-            config: {},
-            description: null,
-            entries: [
-              {
-                assets: [],
-                blocks: [],
-                id: "showreel-entry",
-                metadata: {},
-                profile_data: {
-                  label: "CMS Showreel Item",
-                },
-                published_at: "2026-05-09T00:00:00.000Z",
-                slug: "cms-showreel-item",
-                status: "published",
-                subtitle: null,
-                summary: null,
-                title: "Fallback Showreel Title",
-              },
-            ],
-            id: "showreel",
-            slug: "showreel",
-            title: "Showreel",
-          },
-        ],
-        generatedAt: "2026-05-09T00:00:00.000Z",
-        loadingData: null,
-        profileData: {},
-        workspaceId: "ws-1",
-      },
-      {
-        apiBaseUrl: "https://tuturuuu.example/api/v1",
-      },
-    );
+  test("reports incomplete CMS coverage and keeps static fallback before cutover", () => {
+    const delivery = createDelivery({ includeWebgl: false });
+    const coverage = getTheGuyserCmsCoverageReport(delivery);
+    const content = buildTheGuyserPortfolioData(delivery, {
+      apiBaseUrl: API_BASE_URL,
+    });
 
-    expect(content.profile).toMatchObject({
-      email: "bao@example.com",
-      image: "https://tuturuuu.example/api/v1/workspaces/ws-1/external-projects/assets/profile-image",
-      intro: "Updated profile intro.",
-      name: "Bao Chua",
-      role: "Designer",
-      summary: "Updated profile summary.",
+    expect(coverage.complete).toBe(false);
+    expect(coverage.missing.webglPackages).toContain("theguyser:game:necrolist");
+    expect(content).toEqual(DEFAULT_PORTFOLIO_CONTENT);
+  });
+
+  test("maps complete Tuturuuu delivery collections into all public portfolio sections", () => {
+    const delivery = createDelivery({ mineBlastWebgl: true });
+    const navigation = delivery.collections.find((collection) => collection.slug === "navigation");
+    const gamesTile = navigation?.entries.find((entry) => entry.slug === "experience");
+
+    if (gamesTile) {
+      gamesTile.title = "Browser Games";
+      gamesTile.profile_data = {
+        ...gamesTile.profile_data,
+        iconKey: "gamepad",
+        sortOrder: 5,
+      };
+    }
+
+    const content = buildTheGuyserPortfolioData(delivery, {
+      apiBaseUrl: API_BASE_URL,
     });
-    expect(content.gameProjects).toEqual([
-      expect.objectContaining({
-        actionLabel: "Play",
-        description: "A platform-managed game.",
-        image: "https://tuturuuu.example/api/v1/workspaces/ws-1/external-projects/assets/project-image",
-        playHref: "/games/example",
-        title: "Example Game",
+
+    expect(getTheGuyserCmsCoverageReport(delivery).complete).toBe(true);
+    expect(content.appTiles.find((tile) => tile.id === "experience")).toMatchObject({
+      sortOrder: 5,
+      title: "Browser Games",
+    });
+    expect(content.panelContent.contact).toMatchObject({
+      title: "Connect",
+    });
+    expect(content.quickLaunchCards.some((card) => card.section === "about")).toBe(true);
+    expect(content.siteConfig).toMatchObject({
+      discTitle: "Bao's Portfolio",
+      startLabel: "START",
+    });
+    expect(content.gameProjects.find((project) => project.id === "necrolist")?.playHref).toBe("/games/necrolist");
+    expect(content.gameProjects.find((project) => project.id === "mine-blast")?.playHref).toBe("/games/mine-blast");
+  });
+
+  test("resolves CMS WebGL player metadata for published games", () => {
+    const delivery = createDelivery({ mineBlastWebgl: true });
+    const player = getTheGuyserGamePlayer(delivery, {
+      apiBaseUrl: API_BASE_URL,
+      slug: "mine-blast",
+    });
+
+    expect(player).toMatchObject({
+      iframeSrc: "https://tuturuuu.example/api/v1/workspaces/ws-1/external-projects/assets/mine-blast-webgl/webgl/index.html",
+      slug: "mine-blast",
+      title: "Mine Blast!",
+    });
+    expect(
+      getTheGuyserGamePlayer(createDelivery({ includeWebgl: false }), {
+        apiBaseUrl: API_BASE_URL,
+        slug: "necrolist",
       }),
-    ]);
-    expect(content.researchProjects).toHaveLength(0);
-    expect(content.focusAreas[0]).toMatchObject({
-      bg: "bg-sky-100",
-      color: "text-sky-500",
-      description: "CMS-managed focus copy.",
-      title: "Systems Design",
-    });
-    expect(content.showreelItems).toEqual(["CMS Showreel Item"]);
+    ).toBeNull();
+    expect(
+      getTheGuyserGamePlayer(delivery, {
+        apiBaseUrl: API_BASE_URL,
+        slug: "unknown",
+      }),
+    ).toBeNull();
+  });
+
+  test("manifest covers visible landing-page sections and seeded public content", () => {
+    const collectionSlugs = theGuyserExternalProjectManifest.schema.collections.map((collection) => collection.slug);
+    const stableIds = theGuyserExternalProjectManifest.content.entries.map((entry) => entry.stableSourceId);
+
+    expect(collectionSlugs).toEqual(
+      expect.arrayContaining([
+        "awards",
+        "contact-social",
+        "experience",
+        "navigation",
+        "panel-content",
+        "quick-launch",
+        "showreel",
+        "site-config",
+      ]),
+    );
+    expect(stableIds).toEqual(
+      expect.arrayContaining([
+        "theguyser:site-config:global",
+        "theguyser:navigation:experience",
+        "theguyser:panel:profile",
+        "theguyser:quick-launch:about:experience:0",
+        "theguyser:game:necrolist",
+        "theguyser:research:console-culture",
+      ]),
+    );
   });
 });

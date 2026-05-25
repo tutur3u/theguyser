@@ -10,7 +10,14 @@ const DELIVERY_REVALIDATE_SECONDS = 60;
 
 export type TheGuyserSerializablePortfolioData = Pick<
   PortfolioContent,
-  "gameProjects" | "profile" | "researchProjects" | "showreelItems"
+  | "appTiles"
+  | "gameProjects"
+  | "panelContent"
+  | "profile"
+  | "quickLaunchCards"
+  | "researchProjects"
+  | "showreelItems"
+  | "siteConfig"
 > & {
   focusAreas: TheGuyserSerializableFocusArea[];
   resourceLinks: TheGuyserSerializableResourceLink[];
@@ -23,6 +30,7 @@ function toSerializablePortfolioData(
   content: PortfolioContent,
 ): TheGuyserSerializablePortfolioData {
   return {
+    appTiles: content.appTiles,
     focusAreas: content.focusAreas.map((area) => ({
       bg: area.bg,
       color: area.color,
@@ -30,7 +38,9 @@ function toSerializablePortfolioData(
       title: area.title,
     })),
     gameProjects: content.gameProjects,
+    panelContent: content.panelContent,
     profile: content.profile,
+    quickLaunchCards: content.quickLaunchCards,
     researchProjects: content.researchProjects,
     resourceLinks: content.resourceLinks.map((resource) => ({
       appId: resource.appId,
@@ -41,19 +51,28 @@ function toSerializablePortfolioData(
       note: resource.note,
     })),
     showreelItems: content.showreelItems,
+    siteConfig: content.siteConfig,
   };
 }
 
-async function fetchDeliveryPayload() {
+export async function fetchTheGuyserDeliveryPayload({
+  cacheMode = "force-cache",
+}: {
+  cacheMode?: RequestCache;
+} = {}) {
   const workspaceId = getTheGuyserWorkspaceId();
   const apiBaseUrl = getTheGuyserApiBaseUrl();
   const response = await fetch(
     `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(workspaceId)}/external-projects/delivery`,
     {
-      cache: "force-cache",
-      next: {
-        revalidate: DELIVERY_REVALIDATE_SECONDS,
-      },
+      cache: cacheMode,
+      ...(cacheMode === "no-store"
+        ? {}
+        : {
+            next: {
+              revalidate: DELIVERY_REVALIDATE_SECONDS,
+            },
+          }),
     },
   );
 
@@ -69,7 +88,7 @@ async function fetchDeliveryPayload() {
 
 export const getTheGuyserPortfolioPayload = cache(async () => {
   try {
-    const { apiBaseUrl, delivery } = await fetchDeliveryPayload();
+    const { apiBaseUrl, delivery } = await fetchTheGuyserDeliveryPayload();
     return toSerializablePortfolioData(
       buildTheGuyserPortfolioData(delivery, {
         apiBaseUrl,

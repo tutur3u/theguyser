@@ -3,24 +3,33 @@ import {
   RESUME_PREVIEW_URL,
   RESUME_VIEW_URL,
 } from "@/components/portfolio/data";
+import { getTheGuyserCmsCoverageReport } from "@/lib/theguyser-cms-coverage";
+import { findTheGuyserWebglPackageAsset } from "@/lib/theguyser-webgl";
 import type {
+  AppId,
+  PortfolioAppTile,
   PortfolioContent,
   FocusArea,
+  PortfolioPanelContent,
   PortfolioProfile,
+  PortfolioQuickLaunchCard,
+  PortfolioSiteConfig,
   Project,
   ResourceLink,
+  ScreenId,
+  ThemeMode,
 } from "@/components/portfolio/types";
 
 type JsonObject = Record<string, unknown>;
 
-type DeliveryBlock = {
+export type DeliveryBlock = {
   block_type: string;
   content: JsonObject | null;
   id: string;
   title: string | null;
 };
 
-type DeliveryAsset = {
+export type DeliveryAsset = {
   alt_text: string | null;
   assetUrl: string | null;
   asset_type: string;
@@ -30,10 +39,11 @@ type DeliveryAsset = {
   metadata: JsonObject;
   sort_order: number;
   source_url: string | null;
+  stable_source_id?: string | null;
   storage_path: string | null;
 };
 
-type DeliveryEntry = {
+export type DeliveryEntry = {
   assets: DeliveryAsset[];
   blocks: DeliveryBlock[];
   id: string;
@@ -41,13 +51,14 @@ type DeliveryEntry = {
   profile_data: JsonObject;
   published_at: string | null;
   slug: string;
+  stable_source_id?: string | null;
   status: string;
   subtitle: string | null;
   summary: string | null;
   title: string;
 };
 
-type DeliveryCollection = {
+export type DeliveryCollection = {
   collection_type: string;
   config: JsonObject | null;
   description: string | null;
@@ -75,6 +86,54 @@ function asRecord(value: unknown): JsonObject {
 
 function asString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asBoolean(value: unknown) {
+  return typeof value === "boolean" ? value : null;
+}
+
+function asNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+const SCREEN_IDS = new Set<ScreenId>([
+  "about",
+  "awards",
+  "contact",
+  "disc",
+  "experience",
+  "gallery",
+  "miiverse",
+  "music",
+  "resume",
+  "skills",
+]);
+
+const APP_IDS = new Set<AppId>([
+  "about",
+  "awards",
+  "contact",
+  "experience",
+  "gallery",
+  "miiverse",
+  "music",
+  "resume",
+  "skills",
+]);
+
+function asScreenId(value: unknown) {
+  const id = asString(value);
+  return id && SCREEN_IDS.has(id as ScreenId) ? (id as ScreenId) : null;
+}
+
+function asAppId(value: unknown) {
+  const id = asString(value);
+  return id && APP_IDS.has(id as AppId) ? (id as AppId) : null;
+}
+
+function asThemeMode(value: unknown) {
+  const theme = asString(value);
+  return theme === "light" || theme === "dark" || theme === "system" ? (theme as ThemeMode) : null;
 }
 
 function absolutizeUrl(baseUrl: string, value: string | null | undefined) {
@@ -146,6 +205,8 @@ function toProject(entry: DeliveryEntry, apiBaseUrl: string): Project {
     getLeadImage(entry, apiBaseUrl) ??
     asString(profileData.image) ??
     DEFAULT_PORTFOLIO_CONTENT.profile.image;
+  const webglPackage = findTheGuyserWebglPackageAsset(entry);
+  const playHref = asString(profileData.playHref) ?? (webglPackage ? `/games/${entry.slug}` : undefined);
 
   return {
     actionLabel: asString(profileData.actionLabel) ?? "Open",
@@ -154,9 +215,124 @@ function toProject(entry: DeliveryEntry, apiBaseUrl: string): Project {
     href: asString(profileData.href) ?? "#",
     id: entry.slug,
     image,
-    playHref: asString(profileData.playHref) ?? undefined,
+    playHref,
     title: entry.title,
   };
+}
+
+function getSiteConfig(delivery: TheGuyserDeliveryPayload): PortfolioSiteConfig {
+  const entry = getEntry(getCollection(delivery, "site-config"), "global");
+  const profileData = asRecord(entry?.profile_data);
+  const fallback = DEFAULT_PORTFOLIO_CONTENT.siteConfig;
+
+  return {
+    defaultTheme: asThemeMode(profileData.defaultTheme) ?? fallback.defaultTheme,
+    discTitle: asString(profileData.discTitle) ?? fallback.discTitle,
+    launchAnimationDuration:
+      asNumber(profileData.launchAnimationDuration) ?? fallback.launchAnimationDuration,
+    launchAnimationEnabled:
+      asBoolean(profileData.launchAnimationEnabled) ?? fallback.launchAnimationEnabled,
+    rememberPreferences: asBoolean(profileData.rememberPreferences) ?? fallback.rememberPreferences,
+    startLabel: asString(profileData.startLabel) ?? fallback.startLabel,
+  };
+}
+
+function getAppTiles(delivery: TheGuyserDeliveryPayload): PortfolioAppTile[] {
+  const navigation = getCollection(delivery, "navigation");
+  const entries = navigation?.entries ?? [];
+
+  if (entries.length === 0) {
+    return DEFAULT_PORTFOLIO_CONTENT.appTiles;
+  }
+
+  return entries
+    .map((entry, index) => {
+      const profileData = asRecord(entry.profile_data);
+      const id = asScreenId(profileData.appId) ?? asScreenId(entry.slug);
+
+      if (!id) {
+        return null;
+      }
+
+      const fallback =
+        DEFAULT_PORTFOLIO_CONTENT.appTiles.find((tile) => tile.id === id) ??
+        DEFAULT_PORTFOLIO_CONTENT.appTiles[index] ??
+        DEFAULT_PORTFOLIO_CONTENT.appTiles[0];
+
+      return {
+        color: asString(profileData.color) ?? fallback.color,
+        iconKey: asString(profileData.iconKey) ?? fallback.iconKey,
+        id,
+        size: asString(profileData.size) ?? fallback.size,
+        sortOrder: asNumber(profileData.sortOrder) ?? fallback.sortOrder,
+        title: entry.title || fallback.title,
+        visible: asBoolean(profileData.visible) ?? fallback.visible,
+      } satisfies PortfolioAppTile;
+    })
+    .filter((tile): tile is PortfolioAppTile => Boolean(tile))
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+}
+
+function getPanelContent(delivery: TheGuyserDeliveryPayload): Partial<Record<ScreenId, PortfolioPanelContent>> {
+  const panelContent = getCollection(delivery, "panel-content");
+  const entries = panelContent?.entries ?? [];
+  const result: Partial<Record<ScreenId, PortfolioPanelContent>> = {
+    ...DEFAULT_PORTFOLIO_CONTENT.panelContent,
+  };
+
+  for (const entry of entries) {
+    const profileData = asRecord(entry.profile_data);
+    const id = asScreenId(profileData.appId) ?? asScreenId(entry.slug);
+
+    if (!id) {
+      continue;
+    }
+
+    result[id] = {
+      body: getMarkdown(entry) ?? result[id]?.body,
+      description: entry.summary ?? result[id]?.description,
+      eyebrow: asString(profileData.eyebrow) ?? result[id]?.eyebrow,
+      title: entry.title || result[id]?.title || id,
+    };
+  }
+
+  return result;
+}
+
+function getQuickLaunchCards(delivery: TheGuyserDeliveryPayload): PortfolioQuickLaunchCard[] {
+  const quickLaunch = getCollection(delivery, "quick-launch");
+  const entries = quickLaunch?.entries ?? [];
+
+  if (entries.length === 0) {
+    return DEFAULT_PORTFOLIO_CONTENT.quickLaunchCards;
+  }
+
+  return entries
+    .map((entry, index) => {
+      const profileData = asRecord(entry.profile_data);
+      const appId = asAppId(profileData.appId);
+      const section = asScreenId(profileData.section);
+
+      if (!appId || !section) {
+        return null;
+      }
+
+      const fallback =
+        DEFAULT_PORTFOLIO_CONTENT.quickLaunchCards[index] ??
+        DEFAULT_PORTFOLIO_CONTENT.quickLaunchCards[0];
+
+      return {
+        accent: asString(profileData.accent) ?? fallback.accent,
+        appId,
+        description: entry.summary ?? fallback.description,
+        label: asString(profileData.label) ?? fallback.label,
+        section,
+        sortOrder: asNumber(profileData.sortOrder) ?? fallback.sortOrder,
+        title: entry.title || fallback.title,
+      } satisfies PortfolioQuickLaunchCard;
+    })
+    .filter((card): card is PortfolioQuickLaunchCard => Boolean(card))
+    .sort((left, right) => left.sortOrder - right.sortOrder);
 }
 
 function getProjects(
@@ -252,22 +428,32 @@ export function buildTheGuyserPortfolioData(
     return DEFAULT_PORTFOLIO_CONTENT;
   }
 
+  const coverage = getTheGuyserCmsCoverageReport(delivery);
+
+  if (!coverage.complete) {
+    return DEFAULT_PORTFOLIO_CONTENT;
+  }
+
   const gameProjects = getProjects(delivery, apiBaseUrl, "game");
   const researchProjects = getProjects(delivery, apiBaseUrl, "research");
   const hasExperienceCollection = Boolean(getCollection(delivery, "experience"));
   const projects = [...gameProjects, ...researchProjects];
 
   return {
+    appTiles: getAppTiles(delivery),
     focusAreas: getFocusAreas(delivery),
     gameProjects: hasExperienceCollection
       ? gameProjects
       : DEFAULT_PORTFOLIO_CONTENT.gameProjects,
+    panelContent: getPanelContent(delivery),
     profile: getProfile(delivery, apiBaseUrl),
+    quickLaunchCards: getQuickLaunchCards(delivery),
     researchProjects: hasExperienceCollection
       ? researchProjects
       : DEFAULT_PORTFOLIO_CONTENT.researchProjects,
     resourceLinks: getResourceLinks(delivery),
     showreelItems: getShowreelItems(delivery, projects),
+    siteConfig: getSiteConfig(delivery),
   };
 }
 

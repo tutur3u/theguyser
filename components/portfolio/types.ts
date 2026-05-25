@@ -77,13 +77,53 @@ export type PortfolioProfile = {
   summary: string;
 };
 
+export type PortfolioSiteConfig = {
+  defaultTheme: ThemeMode;
+  discTitle: string;
+  launchAnimationDuration: number;
+  launchAnimationEnabled: boolean;
+  rememberPreferences: boolean;
+  startLabel: string;
+};
+
+export type PortfolioAppTile = {
+  color: string;
+  iconKey: string;
+  id: ScreenId;
+  size: string;
+  sortOrder: number;
+  title: string;
+  visible: boolean;
+};
+
+export type PortfolioPanelContent = {
+  body?: string;
+  description?: string;
+  eyebrow?: string;
+  title: string;
+};
+
+export type PortfolioQuickLaunchCard = {
+  accent: string;
+  appId: AppId;
+  description: string;
+  label: string;
+  section: ScreenId;
+  sortOrder: number;
+  title: string;
+};
+
 export type PortfolioContent = {
+  appTiles: PortfolioAppTile[];
   focusAreas: FocusArea[];
   gameProjects: Project[];
+  panelContent: Partial<Record<ScreenId, PortfolioPanelContent>>;
   profile: PortfolioProfile;
+  quickLaunchCards: PortfolioQuickLaunchCard[];
   researchProjects: Project[];
   resourceLinks: ResourceLink[];
   showreelItems: string[];
+  siteConfig: PortfolioSiteConfig;
 };
 
 export type AppRenderOptions = {

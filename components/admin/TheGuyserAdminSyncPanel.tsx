@@ -28,7 +28,26 @@ async function postAdminJson<T>(url: string, body?: unknown) {
   return (await response.json()) as T;
 }
 
+type SyncCoverage = {
+  complete: boolean;
+  missing: Record<"assets" | "collections" | "entries" | "fields" | "webglPackages", string[]>;
+  summary: Record<
+    | "presentAssets"
+    | "presentCollections"
+    | "presentEntries"
+    | "presentFields"
+    | "presentWebglPackages"
+    | "requiredAssets"
+    | "requiredCollections"
+    | "requiredEntries"
+    | "requiredFields"
+    | "requiredWebglPackages",
+    number
+  >;
+};
+
 type SyncDiffResponse = {
+  coverage?: SyncCoverage;
   hasDestructiveOperations?: boolean;
   operations?: unknown[];
   summary?: {
@@ -49,6 +68,7 @@ export function TheGuyserAdminSyncPanel() {
     uploaded?: unknown[];
   } | null>(null);
   const summary = diff?.summary;
+  const coverage = diff?.coverage;
   const totalOperations =
     (summary?.archive ?? 0) +
     (summary?.create ?? 0) +
@@ -73,6 +93,7 @@ export function TheGuyserAdminSyncPanel() {
     setError(null);
     try {
       const result = await postAdminJson<{
+        coverage?: SyncCoverage;
         diff?: SyncDiffResponse;
         publicAssetSync?: {
           skipped?: unknown[];
@@ -80,7 +101,11 @@ export function TheGuyserAdminSyncPanel() {
         };
       }>("/api/admin/sync/apply", { force });
       setPublicAssetSync(result.publicAssetSync ?? null);
-      setDiff(result.diff ?? (await postAdminJson<SyncDiffResponse>("/api/admin/sync/diff")));
+      setDiff(
+        result.diff
+          ? { ...result.diff, coverage: result.coverage ?? result.diff.coverage }
+          : await postAdminJson<SyncDiffResponse>("/api/admin/sync/diff"),
+      );
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Sync request failed.");
     } finally {
@@ -129,6 +154,53 @@ export function TheGuyserAdminSyncPanel() {
           </button>
         </div>
       </div>
+
+      {coverage ? (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-800 dark:bg-slate-950">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-black text-slate-900 dark:text-white">CMS coverage</span>
+            <span
+              className={
+                "rounded-full px-2.5 py-1 text-xs font-black " +
+                (coverage.complete
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-200")
+              }
+            >
+              {coverage.complete ? "Complete" : "Incomplete"}
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-5">
+            {[
+              ["Collections", coverage.summary.presentCollections, coverage.summary.requiredCollections],
+              ["Entries", coverage.summary.presentEntries, coverage.summary.requiredEntries],
+              ["Fields", coverage.summary.presentFields, coverage.summary.requiredFields],
+              ["Assets", coverage.summary.presentAssets, coverage.summary.requiredAssets],
+              ["WebGL", coverage.summary.presentWebglPackages, coverage.summary.requiredWebglPackages],
+            ].map(([label, present, required]) => (
+              <div className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900" key={label}>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
+                <div className="font-black text-slate-900 dark:text-white">{present}/{required}</div>
+              </div>
+            ))}
+          </div>
+          {!coverage.complete ? (
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {Object.entries(coverage.missing)
+                .filter(([, items]) => items.length > 0)
+                .map(([group, items]) => (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100" key={group}>
+                    <div className="font-black capitalize">{group.replace(/([A-Z])/g, " $1")}</div>
+                    <div className="mt-1 line-clamp-2 text-xs opacity-80">
+                      {items.slice(0, 5).join(", ")}
+                      {items.length > 5 ? " and " + (items.length - 5) + " more" : ""}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {diff ? (
         <div className="mt-4 grid gap-2 text-sm sm:grid-cols-4">

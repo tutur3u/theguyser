@@ -28,7 +28,17 @@ import type {
 } from "@/components/portfolio/types";
 
 type SerializableContentPayload = Partial<
-  Pick<PortfolioContent, "gameProjects" | "profile" | "researchProjects" | "showreelItems">
+  Pick<
+    PortfolioContent,
+    | "appTiles"
+    | "gameProjects"
+    | "panelContent"
+    | "profile"
+    | "quickLaunchCards"
+    | "researchProjects"
+    | "showreelItems"
+    | "siteConfig"
+  >
 > & {
   focusAreas?: Array<Omit<FocusArea, "icon">>;
   resourceLinks?: Array<Omit<ResourceLink, "icon">>;
@@ -198,12 +208,16 @@ export default function PortfolioPage() {
 
         setContent((current) => ({
           ...current,
+          appTiles: payload.content?.appTiles ?? current.appTiles,
           focusAreas: mergeFocusAreas(current.focusAreas, payload.content?.focusAreas),
           gameProjects: payload.content?.gameProjects ?? current.gameProjects,
+          panelContent: payload.content?.panelContent ?? current.panelContent,
           profile: payload.content?.profile ?? current.profile,
+          quickLaunchCards: payload.content?.quickLaunchCards ?? current.quickLaunchCards,
           researchProjects: payload.content?.researchProjects ?? current.researchProjects,
           resourceLinks: mergeResourceLinks(current.resourceLinks, payload.content?.resourceLinks),
           showreelItems: payload.content?.showreelItems ?? current.showreelItems,
+          siteConfig: payload.content?.siteConfig ?? current.siteConfig,
         }));
       } catch (error) {
         if ((error as Error).name !== "AbortError") {

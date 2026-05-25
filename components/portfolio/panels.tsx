@@ -11,7 +11,7 @@ import {
   RESUME_VIEW_URL,
 } from "@/components/portfolio/data";
 import { ExternalAction, ProfileAvatar, ProjectCard, ResourceGrid } from "@/components/portfolio/common";
-import type { AppRenderOptions, PortfolioContent, ScreenId, ThemeMode } from "@/components/portfolio/types";
+import type { AppRenderOptions, PortfolioContent, PortfolioPanelContent, ScreenId, ThemeMode } from "@/components/portfolio/types";
 
 function StatCard({
   label,
@@ -118,12 +118,39 @@ export function PortfolioPanels({
   id: ScreenId;
   options: AppRenderOptions;
 }) {
-  const { focusAreas, gameProjects, profile, researchProjects, resourceLinks, showreelItems } = content;
+  const {
+    focusAreas,
+    gameProjects,
+    panelContent,
+    profile,
+    quickLaunchCards,
+    researchProjects,
+    resourceLinks,
+    showreelItems,
+    siteConfig,
+  } = content;
   const resumeResource =
     resourceLinks.find((resource) => resource.appId === "resume") ??
     resourceLinks.find((resource) => resource.id === "resume");
   const resumeViewUrl = resumeResource?.href ?? RESUME_VIEW_URL;
   const resumePreviewUrl = getDrivePreviewUrl(resumeViewUrl);
+  const getPanel = (panelId: ScreenId): Partial<PortfolioPanelContent> => panelContent[panelId] ?? {};
+  const renderQuickLaunchCards = (section: ScreenId) => {
+    const cards = quickLaunchCards
+      .filter((card) => card.section === section)
+      .sort((left, right) => left.sortOrder - right.sortOrder);
+
+    return cards.map((card) => (
+      <QuickLaunchCard
+        accent={card.accent}
+        description={card.description}
+        key={card.section + "-" + card.appId + "-" + card.sortOrder}
+        label={card.label}
+        title={card.title}
+        onClick={() => onLaunchApp(card.appId)}
+      />
+    ));
+  };
 
   switch (id) {
     case "disc":
@@ -137,17 +164,17 @@ export function PortfolioPanels({
           >
             <ProfileAvatar alt={`${profile.name} portrait`} image={profile.image} size={320} />
           </motion.div>
-          <h2 className="mb-4 text-3xl font-black text-gray-800 dark:text-gray-100 sm:text-4xl">{profile.name}&apos;s Portfolio</h2>
+          <h2 className="mb-4 text-3xl font-black text-gray-800 dark:text-gray-100 sm:text-4xl">{getPanel("disc").title ?? siteConfig.discTitle}</h2>
           <p className="mb-3 text-base font-bold text-sky-600 dark:text-sky-300 sm:text-lg">{profile.role}</p>
           <p className="mb-8 max-w-2xl text-base text-gray-600 dark:text-gray-300 sm:text-lg">
-            {profile.intro} {profile.summary}
+            {getPanel("disc").description ?? profile.intro + " " + profile.summary}
           </p>
           <button
             type="button"
             onClick={() => onLaunchApp("about")}
             className="animate-pulse rounded-full bg-blue-500 px-10 py-3 text-2xl font-black text-white shadow-[0_8px_0_#1d4ed8] transition-all hover:translate-y-1 hover:shadow-[0_6px_0_#1d4ed8] active:translate-y-2 active:shadow-none sm:px-16 sm:py-4 sm:text-3xl"
           >
-            START
+            {siteConfig.startLabel}
           </button>
         </div>
       );
@@ -162,8 +189,8 @@ export function PortfolioPanels({
             </div>
 
             <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
-              <p className="mb-2 text-sm font-black tracking-[0.35em] text-green-500 uppercase dark:text-green-300">Profile</p>
-              <h3 className="mb-2 text-3xl font-black text-gray-800 dark:text-gray-100">{profile.name}</h3>
+              <p className="mb-2 text-sm font-black tracking-[0.35em] text-green-500 uppercase dark:text-green-300">{getPanel("about").eyebrow ?? "Profile"}</p>
+              <h3 className="mb-2 text-3xl font-black text-gray-800 dark:text-gray-100">{getPanel("about").title ?? profile.name}</h3>
               <p className="mb-5 text-xl font-bold text-gray-500 dark:text-gray-400">{profile.role}</p>
               <p className="mb-3 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{profile.intro}</p>
               <p className="mb-6 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{profile.summary}</p>
@@ -171,36 +198,19 @@ export function PortfolioPanels({
               <div className="mb-6 rounded-[1.5rem] border border-gray-100 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
                 <p className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Background</p>
                 <div className="mt-3 space-y-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                  <p>RMIT Vietnam</p>
-                  <p>Game Design Program graduate</p>
+                  {(getPanel("about").body ?? "RMIT Vietnam|Game Design Program graduate")
+                    .split("|")
+                    .map((line) => line.trim())
+                    .filter(Boolean)
+                    .map((line) => (
+                      <p key={line}>{line}</p>
+                    ))}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <QuickLaunchCard
-              accent="from-green-50 to-green-100 text-green-500 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300"
-              label="Games"
-              title="Playable Works"
-              description="Visual novel, FPS, puzzle, and first-person puzzle projects."
-              onClick={() => onLaunchApp("experience")}
-            />
-            <QuickLaunchCard
-              accent="from-blue-50 to-blue-100 text-blue-500 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300"
-              label="Research"
-              title="Archives And Studies"
-              description="Console culture, grotesque studies, and the R4 video essay."
-              onClick={() => onLaunchApp("miiverse")}
-            />
-            <QuickLaunchCard
-              accent="from-amber-50 to-amber-100 text-amber-600 dark:from-amber-900/20 dark:to-amber-800/20 dark:text-amber-300"
-              label="Connect"
-              title="Resume And Links"
-              description="Email, LinkedIn, resume access, and Itch.io in one place."
-              onClick={() => onLaunchApp("contact")}
-            />
-          </div>
+          <div className="grid gap-4 md:grid-cols-3">{renderQuickLaunchCards("about")}</div>
         </div>
       );
     case "skills":
@@ -233,9 +243,9 @@ export function PortfolioPanels({
                 <Settings className="h-7 w-7" />
               </div>
               <div>
-                <h3 className="text-2xl font-black text-gray-800 dark:text-gray-100">Site Settings</h3>
+                <h3 className="text-2xl font-black text-gray-800 dark:text-gray-100">{getPanel("skills").title ?? "Site Settings"}</h3>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Appearance controls live here, and motion settings can optionally be remembered in this browser.
+                  {getPanel("skills").description ?? "Appearance controls live here, and motion settings can optionally be remembered in this browser."}
                 </p>
               </div>
             </div>
@@ -372,29 +382,7 @@ export function PortfolioPanels({
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <QuickLaunchCard
-                  accent="from-blue-50 to-blue-100 text-blue-500 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300"
-                  label="Games"
-                  title="Playable Works"
-                  description="Visual novel, FPS, puzzle, and first-person puzzle work."
-                  onClick={() => onLaunchApp("experience")}
-                />
-                <QuickLaunchCard
-                  accent="from-green-50 to-green-100 text-green-500 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300"
-                  label="Research"
-                  title="Archives And Studies"
-                  description="Console culture, grotesque studies, and a video essay on R4 and DS access."
-                  onClick={() => onLaunchApp("miiverse")}
-                />
-                <QuickLaunchCard
-                  accent="from-amber-50 to-amber-100 text-amber-600 dark:from-amber-900/20 dark:to-amber-800/20 dark:text-amber-300"
-                  label="Connect"
-                  title="Resume And Links"
-                  description="Open the central hub for email, LinkedIn, resume, and Itch.io."
-                  onClick={() => onLaunchApp("contact")}
-                />
-              </div>
+              <div className="grid gap-4 md:grid-cols-3">{renderQuickLaunchCards("skills")}</div>
             </div>
           </div>
         </div>
@@ -408,9 +396,9 @@ export function PortfolioPanels({
                 <Mail className="h-7 w-7" />
               </div>
               <div>
-                <h3 className="text-3xl font-black text-gray-800 dark:text-gray-100">Connect</h3>
+                <h3 className="text-3xl font-black text-gray-800 dark:text-gray-100">{getPanel("contact").title ?? "Connect"}</h3>
                 <p className="mt-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Resume access and the fastest ways to reach or follow Bao.
+                  {getPanel("contact").description ?? "Resume access and the fastest ways to reach or follow Bao."}
                 </p>
               </div>
             </div>
@@ -427,7 +415,7 @@ export function PortfolioPanels({
               <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
                 <FileText className="h-12 w-12 text-gray-800 dark:text-gray-200" />
               </div>
-              <h3 className="mb-2 text-center text-2xl font-black text-gray-800 dark:text-gray-100">Resume</h3>
+              <h3 className="mb-2 text-center text-2xl font-black text-gray-800 dark:text-gray-100">{getPanel("resume").title ?? "Resume"}</h3>
               <p className="mb-6 text-center text-gray-500 dark:text-gray-400">{profile.name}</p>
 
               <div className="mb-8 grid grid-cols-2 gap-4">
@@ -460,9 +448,9 @@ export function PortfolioPanels({
             <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:flex md:min-h-0 md:flex-col">
               <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                 <div className="text-sm font-black tracking-[0.25em] text-gray-400 uppercase dark:text-gray-500">Embedded PDF</div>
-                <div className="mt-1 text-2xl font-black text-gray-800 dark:text-gray-100">Bao Chua CV</div>
+                <div className="mt-1 text-2xl font-black text-gray-800 dark:text-gray-100">{getPanel("resume").title ?? "Bao Chua CV"}</div>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  In-app Google Drive preview. If it fails to load, use the external open button.
+                  {getPanel("resume").description ?? "In-app Google Drive preview. If it fails to load, use the external open button."}
                 </p>
               </div>
               <iframe
@@ -554,9 +542,9 @@ export function PortfolioPanels({
             </div>
 
             <div className="mt-8 text-center">
-              <h3 className="text-2xl font-black text-teal-700 dark:text-teal-300">Now Playing: Bao Chua Showreel</h3>
+              <h3 className="text-2xl font-black text-teal-700 dark:text-teal-300">{getPanel("music").title ?? "Now Playing: Bao Chua Showreel"}</h3>
               <p className="mt-2 text-gray-500 dark:text-gray-400">
-                A rotating queue of the projects featured in the portfolio source.
+                {getPanel("music").description ?? "A rotating queue of the projects featured in the portfolio source."}
               </p>
             </div>
           </div>

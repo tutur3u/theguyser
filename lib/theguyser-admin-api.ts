@@ -399,5 +399,5 @@ export async function deleteTheGuyserAdminAsset(accessToken: string, assetId: st
 
 export function revalidateTheGuyserContent() {
   revalidatePath("/", "layout");
-  revalidatePath("/games/necrolist");
+  revalidatePath("/games", "layout");
 }

@@ -4,10 +4,21 @@ import {
 } from "@/lib/theguyser-config";
 import { getTheGuyserAdminSession } from "@/lib/theguyser-admin-api";
 import { linkPublicFolderAssets } from "@/lib/tuturuuu-public-folder-sync";
+import { getTheGuyserCmsCoverageReport } from "@/lib/theguyser-cms-coverage";
+import { fetchTheGuyserDeliveryPayload } from "@/lib/theguyser-delivery";
 import { theGuyserExternalProjectManifest } from "@/lib/theguyser-external-project-manifest";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+async function readCoverage() {
+  try {
+    const { delivery } = await fetchTheGuyserDeliveryPayload({ cacheMode: "no-store" });
+    return getTheGuyserCmsCoverageReport(delivery);
+  } catch {
+    return getTheGuyserCmsCoverageReport(null);
+  }
+}
 
 async function readApiError(response: Response) {
   const fallback = `Tuturuuu sync diff failed with status ${response.status}`;
@@ -68,5 +79,8 @@ export async function POST() {
     return NextResponse.json({ error: await readApiError(response) }, { status: response.status });
   }
 
-  return NextResponse.json(await response.json());
+  return NextResponse.json({
+    ...(await response.json()),
+    coverage: await readCoverage(),
+  });
 }

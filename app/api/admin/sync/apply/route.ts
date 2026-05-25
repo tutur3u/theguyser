@@ -4,10 +4,21 @@ import {
 } from "@/lib/theguyser-config";
 import { getTheGuyserAdminSession, revalidateTheGuyserContent } from "@/lib/theguyser-admin-api";
 import { syncPublicFolderAssets } from "@/lib/tuturuuu-public-folder-sync";
+import { getTheGuyserCmsCoverageReport } from "@/lib/theguyser-cms-coverage";
+import { fetchTheGuyserDeliveryPayload } from "@/lib/theguyser-delivery";
 import { theGuyserExternalProjectManifest } from "@/lib/theguyser-external-project-manifest";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+async function readCoverage() {
+  try {
+    const { delivery } = await fetchTheGuyserDeliveryPayload({ cacheMode: "no-store" });
+    return getTheGuyserCmsCoverageReport(delivery);
+  } catch {
+    return getTheGuyserCmsCoverageReport(null);
+  }
+}
 
 async function readApiError(response: Response) {
   const fallback = `Tuturuuu sync apply failed with status ${response.status}`;
@@ -60,6 +71,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "Missing local public assets. Upload aborted before applying the manifest.",
+        coverage: await readCoverage(),
         publicAssetSync: {
           skipped: publicAssetSync.skipped,
           uploaded: publicAssetSync.uploaded,
@@ -95,6 +107,7 @@ export async function POST(request: Request) {
   revalidateTheGuyserContent();
   return NextResponse.json({
     ...(await response.json()),
+    coverage: await readCoverage(),
     publicAssetSync: {
       skipped: publicAssetSync.skipped,
       uploaded: publicAssetSync.uploaded,
