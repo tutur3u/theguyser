@@ -1,5 +1,5 @@
 import { theGuyserExternalProjectManifest, type TheGuyserExternalProjectManifest } from "@/lib/theguyser-external-project-manifest";
-import type { DeliveryAsset, DeliveryCollection, DeliveryEntry, TheGuyserDeliveryPayload } from "@/lib/theguyser-content";
+import type { DeliveryCollection, DeliveryEntry, TheGuyserDeliveryPayload } from "@/lib/theguyser-content";
 import { hasValidTheGuyserWebglPackage } from "@/lib/theguyser-webgl";
 
 type MissingGroups = {
@@ -94,14 +94,6 @@ function hasManifestAsset(deliveryEntry: DeliveryEntry | null, manifestAsset: { 
   );
 }
 
-function requiresWebglPackage(entry: TheGuyserExternalProjectManifest["content"]["entries"][number]) {
-  const profileData = asRecord(entry.profileData);
-  const playHref = asString(profileData.playHref);
-
-  return profileData.requiresWebgl === true || Boolean(playHref?.startsWith("/games/"));
-}
-
-
 export function getTheGuyserCmsCoverageReport(
   delivery: TheGuyserDeliveryPayload | null | undefined,
   manifest: TheGuyserExternalProjectManifest = theGuyserExternalProjectManifest,
@@ -127,7 +119,7 @@ export function getTheGuyserCmsCoverageReport(
           (count, collection) => count + (collection.profileFields?.length ?? 0) + (collection.metadataFields?.length ?? 0),
           0,
         ),
-        requiredWebglPackages: manifest.content.entries.filter(requiresWebglPackage).length,
+        requiredWebglPackages: 0,
       },
     };
   }
@@ -187,7 +179,6 @@ export function getTheGuyserCmsCoverageReport(
 
   let requiredAssets = 0;
   let presentAssets = 0;
-  let requiredWebglPackages = 0;
   let presentWebglPackages = 0;
 
   for (const manifestEntry of manifest.content.entries) {
@@ -207,18 +198,10 @@ export function getTheGuyserCmsCoverageReport(
       }
     }
 
-    if (requiresWebglPackage(manifestEntry)) {
-      requiredWebglPackages += 1;
-
-      if (deliveryEntry && deliveryEntry.assets.some((asset: DeliveryAsset) => hasValidTheGuyserWebglPackage(asset))) {
-        presentWebglPackages += 1;
-      } else {
-        missing.webglPackages.push(getManifestEntryKey(manifestEntry));
-      }
+    if (deliveryEntry?.assets.some((asset) => hasValidTheGuyserWebglPackage(asset))) {
+      presentWebglPackages += 1;
     }
-
   }
-
 
   return {
     complete: Object.values(missing).every((items) => items.length === 0),
@@ -233,7 +216,7 @@ export function getTheGuyserCmsCoverageReport(
       requiredCollections: manifest.schema.collections.length,
       requiredEntries: manifest.content.entries.length,
       requiredFields,
-      requiredWebglPackages,
+      requiredWebglPackages: 0,
     },
   };
 }

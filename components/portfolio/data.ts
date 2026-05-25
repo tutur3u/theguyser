@@ -58,7 +58,6 @@ export const GAME_PROJECTS: Project[] = [
     href: "https://exocorpse.itch.io/necrolist",
     actionLabel: "Open Itch.io",
     image: "https://baochua.carrd.co/assets/images/container03.jpg?v=4f0e4032",
-    playHref: "/games/necrolist",
   },
   {
     id: "spaceship-fps",

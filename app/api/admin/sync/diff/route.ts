@@ -3,7 +3,10 @@ import {
   getTheGuyserWorkspaceId,
 } from "@/lib/theguyser-config";
 import { getTheGuyserAdminSession } from "@/lib/theguyser-admin-api";
-import { linkPublicFolderAssets } from "@/lib/tuturuuu-public-folder-sync";
+import {
+  discoverPublicFolderFiles,
+  linkPublicFolderAssets,
+} from "@/lib/tuturuuu-public-folder-sync";
 import { getTheGuyserCmsCoverageReport } from "@/lib/theguyser-cms-coverage";
 import { fetchTheGuyserDeliveryPayload } from "@/lib/theguyser-delivery";
 import { theGuyserExternalProjectManifest } from "@/lib/theguyser-external-project-manifest";
@@ -35,7 +38,8 @@ export async function POST() {
 
   const workspaceId = getTheGuyserWorkspaceId();
   const apiBaseUrl = getTheGuyserApiBaseUrl();
-  const manifest = linkPublicFolderAssets(theGuyserExternalProjectManifest);
+  const publicFiles = await discoverPublicFolderFiles();
+  const manifest = linkPublicFolderAssets(theGuyserExternalProjectManifest, { publicFiles });
   const setupResponse = await fetch(
     `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,

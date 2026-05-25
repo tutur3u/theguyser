@@ -7,22 +7,9 @@ import { getTheGuyserGamePlayer } from "@/lib/theguyser-webgl";
 
 const API_BASE_URL = "https://tuturuuu.example/api/v1";
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function needsWebgl(entry: (typeof theGuyserExternalProjectManifest.content.entries)[number]) {
-  const profileData = asRecord(entry.profileData);
-  return profileData.requiresWebgl === true || String(profileData.playHref ?? "").startsWith("/games/");
-}
-
 function createDelivery({
-  includeWebgl = true,
   mineBlastWebgl = false,
 }: {
-  includeWebgl?: boolean;
   mineBlastWebgl?: boolean;
 } = {}): TheGuyserDeliveryPayload {
   return {
@@ -53,7 +40,7 @@ function createDelivery({
             storage_path: asset.storagePath ?? null,
           }));
 
-          if ((includeWebgl && needsWebgl(entry)) || (mineBlastWebgl && entry.slug === "mine-blast")) {
+          if (mineBlastWebgl && entry.slug === "mine-blast") {
             assets.push({
               alt_text: `${entry.title} WebGL package`,
               assetUrl: null,
@@ -105,15 +92,30 @@ function createDelivery({
 
 describe("theguyser content delivery normalization", () => {
   test("reports incomplete CMS coverage and keeps static fallback before cutover", () => {
-    const delivery = createDelivery({ includeWebgl: false });
+    const delivery = createDelivery();
+    delivery.collections = delivery.collections.filter((collection) => collection.slug !== "navigation");
     const coverage = getTheGuyserCmsCoverageReport(delivery);
     const content = buildTheGuyserPortfolioData(delivery, {
       apiBaseUrl: API_BASE_URL,
     });
 
     expect(coverage.complete).toBe(false);
-    expect(coverage.missing.webglPackages).toContain("theguyser:game:necrolist");
+    expect(coverage.missing.collections).toContain("navigation");
     expect(content).toEqual(DEFAULT_PORTFOLIO_CONTENT);
+  });
+
+  test("treats seeded CMS content as complete without WebGL packages", () => {
+    const delivery = createDelivery();
+    const coverage = getTheGuyserCmsCoverageReport(delivery);
+    const content = buildTheGuyserPortfolioData(delivery, {
+      apiBaseUrl: API_BASE_URL,
+    });
+
+    expect(coverage.complete).toBe(true);
+    expect(coverage.summary.requiredWebglPackages).toBe(0);
+    expect(coverage.missing.webglPackages).toEqual([]);
+    expect(content).not.toEqual(DEFAULT_PORTFOLIO_CONTENT);
+    expect(content.gameProjects.find((project) => project.id === "necrolist")?.playHref).toBeUndefined();
   });
 
   test("maps complete Tuturuuu delivery collections into all public portfolio sections", () => {
@@ -147,7 +149,7 @@ describe("theguyser content delivery normalization", () => {
       discTitle: "Bao's Portfolio",
       startLabel: "START",
     });
-    expect(content.gameProjects.find((project) => project.id === "necrolist")?.playHref).toBe("/games/necrolist");
+    expect(content.gameProjects.find((project) => project.id === "necrolist")?.playHref).toBeUndefined();
     expect(content.gameProjects.find((project) => project.id === "mine-blast")?.playHref).toBe("/games/mine-blast");
   });
 
@@ -164,7 +166,7 @@ describe("theguyser content delivery normalization", () => {
       title: "Mine Blast!",
     });
     expect(
-      getTheGuyserGamePlayer(createDelivery({ includeWebgl: false }), {
+      getTheGuyserGamePlayer(createDelivery(), {
         apiBaseUrl: API_BASE_URL,
         slug: "necrolist",
       }),

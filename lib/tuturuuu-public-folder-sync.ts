@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { basename, extname, resolve, sep } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { basename, extname, relative, resolve, sep } from "node:path";
 import { posix } from "node:path";
 
 type PublicAssetMetadata = Record<string, unknown> & {
@@ -46,6 +46,12 @@ export type PublicFolderAssetUpload = {
   storagePath: string;
 };
 
+export type PublicFolderFile = {
+  absolutePath: string;
+  filename: string;
+  publicPath: string;
+};
+
 export type PublicFolderSyncResult<Manifest extends PublicManifest> = {
   manifest: Manifest;
   skipped: PublicFolderAssetUpload[];
@@ -58,9 +64,14 @@ type SyncPublicFolderAssetsInput<Manifest extends PublicManifest> = {
   fetch?: typeof fetch;
   manifest: Manifest;
   publicDir?: string;
+  publicOrigin?: string | null;
   tokenType?: string;
   upsert?: boolean;
   workspaceId: string;
+};
+
+type LinkPublicFolderAssetsOptions = {
+  publicFiles?: Map<string, PublicFolderFile>;
 };
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -96,16 +107,116 @@ function normalizePublicPath(value: unknown) {
   return normalized;
 }
 
-function getAssetPublicPath(asset: PublicAsset) {
+function getUrlPathname(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  try {
+    return new URL(value).pathname;
+  } catch {
+    return null;
+  }
+}
+
+function getPublicFileByFilename(
+  publicFiles: Map<string, PublicFolderFile> | undefined,
+  filename: string | null,
+) {
+  if (!publicFiles || !filename) {
+    return null;
+  }
+
+  return [...publicFiles.values()]
+    .sort((a, b) => a.publicPath.localeCompare(b.publicPath))
+    .find((file) => file.filename === filename)?.publicPath ?? null;
+}
+
+function getFilenameCandidate(value: unknown) {
+  const publicPath = normalizePublicPath(value) ?? getUrlPathname(value);
+  if (!publicPath) {
+    return null;
+  }
+
+  const filename = basename(publicPath);
+  return filename || null;
+}
+
+function getAssetPublicPath(
+  asset: PublicAsset,
+  publicFiles?: Map<string, PublicFolderFile>,
+) {
   const metadata = (asset.metadata ?? {}) as PublicAssetMetadata;
 
-  return (
+  const explicitPath =
     normalizePublicPath(asset.publicPath) ??
     normalizePublicPath(metadata.publicPath) ??
     normalizePublicPath(metadata.localAssetPath) ??
     normalizePublicPath(metadata.sourcePublicPath) ??
-    normalizePublicPath(asset.sourceUrl)
+    normalizePublicPath(asset.sourceUrl);
+
+  if (explicitPath) {
+    return explicitPath;
+  }
+
+  return (
+    getPublicFileByFilename(publicFiles, getFilenameCandidate(asset.sourceUrl)) ??
+    getPublicFileByFilename(publicFiles, getFilenameCandidate(asset.publicPath)) ??
+    getPublicFileByFilename(publicFiles, getFilenameCandidate(metadata.publicPath)) ??
+    getPublicFileByFilename(publicFiles, getFilenameCandidate(metadata.localAssetPath)) ??
+    getPublicFileByFilename(publicFiles, getFilenameCandidate(metadata.sourcePublicPath))
   );
+}
+
+export async function discoverPublicFolderFiles(
+  publicDir = resolve(/* turbopackIgnore: true */ process.cwd(), "public"),
+) {
+  const publicRoot = resolve(/* turbopackIgnore: true */ publicDir);
+  const files = new Map<string, PublicFolderFile>();
+
+  async function visit(directory: string) {
+    let entries;
+    try {
+      entries = await readdir(/* turbopackIgnore: true */ directory, {
+        withFileTypes: true,
+      });
+    } catch (error) {
+      if (directory === publicRoot) {
+        return;
+      }
+
+      throw error;
+    }
+
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) {
+        continue;
+      }
+
+      const absolutePath = resolve(/* turbopackIgnore: true */ directory, entry.name);
+
+      if (entry.isDirectory()) {
+        await visit(absolutePath);
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      const relativePath = relative(publicRoot, absolutePath).split(sep).join(posix.sep);
+      const publicPath = `/${relativePath}`;
+      files.set(publicPath, {
+        absolutePath,
+        filename: entry.name,
+        publicPath,
+      });
+    }
+  }
+
+  await visit(publicRoot);
+
+  return files;
 }
 
 function contentTypeForPath(publicPath: string) {
@@ -122,7 +233,10 @@ function resolvePublicFilePath(publicDir: string, publicPath: string) {
   return filePath;
 }
 
-function getPublicAssetUploads(manifest: PublicManifest) {
+function getPublicAssetUploads(
+  manifest: PublicManifest,
+  publicFiles?: Map<string, PublicFolderFile>,
+) {
   const uploads: Array<{
     asset: PublicAsset;
     entry: PublicEntry;
@@ -131,7 +245,7 @@ function getPublicAssetUploads(manifest: PublicManifest) {
 
   for (const entry of manifest.content.entries) {
     for (const asset of entry.assets ?? []) {
-      const publicPath = getAssetPublicPath(asset);
+      const publicPath = getAssetPublicPath(asset, publicFiles);
       if (publicPath) {
         uploads.push({ asset, entry, publicPath });
       }
@@ -186,10 +300,50 @@ async function readUploadUrlError(response: Response) {
   return `Tuturuuu asset upload URL failed with status ${response.status}`;
 }
 
-export function linkPublicFolderAssets<Manifest extends PublicManifest>(manifestInput: Manifest) {
+async function readPublicAssetFile({
+  fetchImpl,
+  publicDir,
+  publicOrigin,
+  publicPath,
+}: {
+  fetchImpl: typeof fetch;
+  publicDir: string;
+  publicOrigin?: string | null;
+  publicPath: string;
+}) {
+  try {
+    return await readFile(/* turbopackIgnore: true */ resolvePublicFilePath(publicDir, publicPath));
+  } catch {
+    if (!publicOrigin) {
+      return null;
+    }
+  }
+
+  try {
+    const response = await fetchImpl(new URL(publicPath, publicOrigin).toString(), {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return Buffer.from(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+export function linkPublicFolderAssets<Manifest extends PublicManifest>(
+  manifestInput: Manifest,
+  options: LinkPublicFolderAssetsOptions = {},
+) {
   const manifest = cloneManifest(manifestInput);
 
-  for (const { asset, entry, publicPath } of getPublicAssetUploads(manifest)) {
+  for (const { asset, entry, publicPath } of getPublicAssetUploads(
+    manifest,
+    options.publicFiles,
+  )) {
     asset.metadata = {
       ...(asset.metadata ?? {}),
       publicPath,
@@ -212,15 +366,17 @@ export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
   fetch: fetchImpl = fetch,
   manifest: manifestInput,
   publicDir = resolve(/* turbopackIgnore: true */ process.cwd(), "public"),
+  publicOrigin = null,
   tokenType = "Bearer",
   upsert = true,
   workspaceId,
 }: SyncPublicFolderAssetsInput<Manifest>): Promise<PublicFolderSyncResult<Manifest>> {
-  const manifest = linkPublicFolderAssets(manifestInput);
+  const publicFiles = await discoverPublicFolderFiles(publicDir);
+  const manifest = linkPublicFolderAssets(manifestInput, { publicFiles });
   const uploaded: PublicFolderAssetUpload[] = [];
   const skipped: PublicFolderAssetUpload[] = [];
 
-  for (const { asset, entry, publicPath } of getPublicAssetUploads(manifest)) {
+  for (const { asset, entry, publicPath } of getPublicAssetUploads(manifest, publicFiles)) {
     const upload = {
       collectionSlug: entry.collectionSlug,
       entrySlug: entry.slug,
@@ -237,10 +393,14 @@ export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
         }),
     } satisfies PublicFolderAssetUpload;
 
-    let file: Buffer;
-    try {
-      file = await readFile(/* turbopackIgnore: true */ resolvePublicFilePath(publicDir, publicPath));
-    } catch {
+    const file = await readPublicAssetFile({
+      fetchImpl,
+      publicDir,
+      publicOrigin,
+      publicPath,
+    });
+
+    if (!file) {
       skipped.push(upload);
       continue;
     }

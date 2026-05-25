@@ -36,6 +36,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { force?: unknown } | null;
   const workspaceId = getTheGuyserWorkspaceId();
   const apiBaseUrl = getTheGuyserApiBaseUrl();
+  const publicOrigin = new URL(request.url).origin;
   const setupResponse = await fetch(
     `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
     accessToken: session.accessToken,
     apiBaseUrl,
     manifest: theGuyserExternalProjectManifest,
+    publicOrigin,
     tokenType: session.tokenType,
     workspaceId,
   });

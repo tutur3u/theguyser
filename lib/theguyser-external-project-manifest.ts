@@ -92,8 +92,6 @@ const projectProfileFields = [
   { key: "category", label: "Category", type: "string" },
   { key: "href", label: "Primary URL", type: "string" },
   { key: "actionLabel", label: "Action label", type: "string" },
-  { key: "playHref", label: "Internal play URL", type: "string" },
-  { key: "requiresWebgl", label: "Requires WebGL package", type: "boolean" },
 ] satisfies TheGuyserSyncField[];
 
 const focusProfileFields = [
@@ -171,8 +169,6 @@ function projectEntry(project: Project, kind: "game" | "research") {
       category: project.category,
       href: project.href,
       kind,
-      playHref: project.playHref ?? null,
-      requiresWebgl: project.playHref?.startsWith("/games/") ?? false,
     },
     slug: project.id,
     stableSourceId: `theguyser:${kind}:${project.id}`,

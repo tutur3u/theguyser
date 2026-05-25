@@ -206,7 +206,7 @@ function toProject(entry: DeliveryEntry, apiBaseUrl: string): Project {
     asString(profileData.image) ??
     DEFAULT_PORTFOLIO_CONTENT.profile.image;
   const webglPackage = findTheGuyserWebglPackageAsset(entry);
-  const playHref = asString(profileData.playHref) ?? (webglPackage ? `/games/${entry.slug}` : undefined);
+  const playHref = webglPackage ? `/games/${entry.slug}` : undefined;
 
   return {
     actionLabel: asString(profileData.actionLabel) ?? "Open",
