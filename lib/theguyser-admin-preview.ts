@@ -1,5 +1,5 @@
 import { DEFAULT_PORTFOLIO_CONTENT } from "@/components/portfolio/data";
-import type { PortfolioContent } from "@/components/portfolio/types";
+import type { FocusArea, PortfolioContent, ResourceLink } from "@/components/portfolio/types";
 import type {
   JsonObject,
   TheGuyserAdminAsset,
@@ -20,8 +20,16 @@ import {
 export const THEGUYSER_ADMIN_PREVIEW_MESSAGE = "theguyser:admin-preview" as const;
 
 export type TheGuyserAdminPreviewMessage = {
-  content: PortfolioContent;
+  content: TheGuyserAdminSerializablePreviewContent;
   type: typeof THEGUYSER_ADMIN_PREVIEW_MESSAGE;
+};
+
+export type TheGuyserAdminSerializablePreviewContent = Omit<
+  PortfolioContent,
+  "focusAreas" | "resourceLinks"
+> & {
+  focusAreas: Array<Omit<FocusArea, "icon">>;
+  resourceLinks: Array<Omit<ResourceLink, "icon">>;
 };
 
 export type TheGuyserAdminEntryDraftPreview = Partial<
@@ -253,4 +261,75 @@ export function buildTheGuyserAdminDraftPortfolioContent({
   const content = buildTheGuyserPortfolioData(delivery, { apiBaseUrl });
 
   return content ?? DEFAULT_PORTFOLIO_CONTENT;
+}
+
+export function serializeTheGuyserAdminPreviewContent(
+  content: PortfolioContent,
+): TheGuyserAdminSerializablePreviewContent {
+  return {
+    ...content,
+    focusAreas: content.focusAreas.map(({ icon: _icon, ...focusArea }) => focusArea),
+    resourceLinks: content.resourceLinks.map(({ icon: _icon, ...resourceLink }) => resourceLink),
+  };
+}
+
+function hydrateResourceLinks(
+  incoming: TheGuyserAdminSerializablePreviewContent["resourceLinks"],
+) {
+  const incomingById = new Map(incoming.map((resource) => [resource.id, resource]));
+  const merged = DEFAULT_PORTFOLIO_CONTENT.resourceLinks.map((fallback, index) => {
+    const resource = incomingById.get(fallback.id) ?? incoming[index];
+
+    if (!resource) {
+      return fallback;
+    }
+
+    incomingById.delete(resource.id);
+
+    return {
+      ...fallback,
+      ...resource,
+      icon: fallback.icon,
+    };
+  });
+
+  for (const resource of incomingById.values()) {
+    const fallback =
+      DEFAULT_PORTFOLIO_CONTENT.resourceLinks.find((item) => item.id === resource.id) ??
+      DEFAULT_PORTFOLIO_CONTENT.resourceLinks[0];
+
+    merged.push({
+      ...fallback,
+      ...resource,
+      icon: fallback.icon,
+    });
+  }
+
+  return merged;
+}
+
+function hydrateFocusAreas(incoming: TheGuyserAdminSerializablePreviewContent["focusAreas"]) {
+  return incoming.map((area, index) => {
+    const fallback =
+      DEFAULT_PORTFOLIO_CONTENT.focusAreas.find((item) => item.title === area.title) ??
+      DEFAULT_PORTFOLIO_CONTENT.focusAreas[index] ??
+      DEFAULT_PORTFOLIO_CONTENT.focusAreas[0];
+
+    return {
+      ...fallback,
+      ...area,
+      icon: fallback.icon,
+    };
+  });
+}
+
+export function hydrateTheGuyserAdminPreviewContent(
+  content: TheGuyserAdminSerializablePreviewContent,
+): PortfolioContent {
+  return {
+    ...DEFAULT_PORTFOLIO_CONTENT,
+    ...content,
+    focusAreas: hydrateFocusAreas(content.focusAreas),
+    resourceLinks: hydrateResourceLinks(content.resourceLinks),
+  };
 }

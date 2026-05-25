@@ -18,6 +18,7 @@ import { PortfolioPanels } from "@/components/portfolio/panels";
 import { useDashboardNavigation } from "@/components/portfolio/use-dashboard-navigation";
 import type { AppDefinition, AppId, PortfolioContent, ThemeMode } from "@/components/portfolio/types";
 import {
+  hydrateTheGuyserAdminPreviewContent,
   THEGUYSER_ADMIN_PREVIEW_MESSAGE,
   type TheGuyserAdminPreviewMessage,
 } from "@/lib/theguyser-admin-preview";
@@ -75,7 +76,7 @@ export function TheGuyserAdminDraftPreviewClient() {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (isPreviewMessage(event.data)) {
-        setContent(event.data.content);
+        setContent(hydrateTheGuyserAdminPreviewContent(event.data.content));
       }
     };
 

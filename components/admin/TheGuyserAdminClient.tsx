@@ -13,6 +13,7 @@ import {
 } from "@/lib/theguyser-admin-fields";
 import {
   buildTheGuyserAdminDraftPortfolioContent,
+  serializeTheGuyserAdminPreviewContent,
   THEGUYSER_ADMIN_PREVIEW_MESSAGE,
   type TheGuyserAdminAssetDraftPreview,
   type TheGuyserAdminCollectionDraftPreview,
@@ -362,7 +363,7 @@ function TheGuyserAdminFullSitePreview({ content }: { content: PortfolioContent 
 
   const postPreview = useCallback(() => {
     const message = {
-      content,
+      content: serializeTheGuyserAdminPreviewContent(content),
       type: THEGUYSER_ADMIN_PREVIEW_MESSAGE,
     } satisfies TheGuyserAdminPreviewMessage;
 

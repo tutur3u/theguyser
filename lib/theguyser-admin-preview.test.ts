@@ -3,6 +3,7 @@ import type { TheGuyserAdminStudioPayload } from "@/lib/theguyser-admin-api";
 import {
   buildTheGuyserAdminDraftDelivery,
   buildTheGuyserAdminDraftPortfolioContent,
+  serializeTheGuyserAdminPreviewContent,
   THEGUYSER_ADMIN_PREVIEW_MESSAGE,
 } from "@/lib/theguyser-admin-preview";
 import { theGuyserExternalProjectManifest } from "@/lib/theguyser-external-project-manifest";
@@ -135,6 +136,21 @@ describe("theguyser admin draft preview", () => {
     expect(content.gameProjects.find((project) => project.id === "mine-blast")?.image).toBe(
       "https://cdn.example.com/mine-blast-draft.png",
     );
+  });
+
+  test("serializes preview content into a postMessage-safe payload", () => {
+    const content = buildTheGuyserAdminDraftPortfolioContent({
+      apiBaseUrl: API_BASE_URL,
+      studio: createStudio(),
+    });
+    const message = {
+      content: serializeTheGuyserAdminPreviewContent(content),
+      type: THEGUYSER_ADMIN_PREVIEW_MESSAGE,
+    };
+
+    expect(() => structuredClone(message)).not.toThrow();
+    expect(message.content.focusAreas[0]).not.toHaveProperty("icon");
+    expect(message.content.resourceLinks[0]).not.toHaveProperty("icon");
   });
 
   test("preserves collection config edits in draft delivery", () => {
