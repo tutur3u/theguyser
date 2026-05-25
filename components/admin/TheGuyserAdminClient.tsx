@@ -233,7 +233,7 @@ function getCollectionTitle(collections: TheGuyserAdminCollection[], collectionI
 
 function getPrimaryAsset(entry: TheGuyserAdminEntry, assets: TheGuyserAdminAsset[]) {
   return assets
-    .filter((asset) => asset.entry_id === entry.id)
+    .filter((asset) => asset.entry_id === entry.id && asset.asset_type === "image")
     .sort((a, b) => a.sort_order - b.sort_order)[0];
 }
 
