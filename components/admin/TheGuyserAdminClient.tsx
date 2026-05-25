@@ -6,6 +6,7 @@ import { TheGuyserAdminSyncPanel } from "@/components/admin/TheGuyserAdminSyncPa
 import type {
   JsonObject,
   TheGuyserAdminAsset,
+  TheGuyserAdminBlock,
   TheGuyserAdminCollection,
   TheGuyserAdminEntry,
   TheGuyserAdminStudioPayload,
