@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
-import { getTheGuyserWorkspaceId } from "@/lib/theguyser-config";
+import { getTheGuyserApiBaseUrl, getTheGuyserWorkspaceId } from "@/lib/theguyser-config";
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 
@@ -82,11 +82,33 @@ function unsealSession(value: string): TheGuyserAdminSession | null {
   }
 }
 
+function getTheGuyserSessionValidationUrl(workspaceId: string) {
+  const apiBaseUrl = getTheGuyserApiBaseUrl().replace(/\/+$/, "");
+  return `${apiBaseUrl}/workspaces/${encodeURIComponent(workspaceId)}/external-projects/summary`;
+}
+
+async function validateTheGuyserSession(session: TheGuyserAdminSession) {
+  try {
+    const response = await fetch(getTheGuyserSessionValidationUrl(session.workspaceId), {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        Authorization: `${session.tokenType} ${session.accessToken}`,
+      },
+    });
+
+    return response.ok ? session : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getTheGuyserSessionFromCookies() {
   const cookieStore = await cookies();
   const value = cookieStore.get(THEGUYSER_SESSION_COOKIE)?.value;
+  const session = value ? unsealSession(value) : null;
 
-  return value ? unsealSession(value) : null;
+  return session ? validateTheGuyserSession(session) : null;
 }
 
 export function setTheGuyserSessionCookie(
