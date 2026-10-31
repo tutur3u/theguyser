@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "wii-u-portfolio", "**/*.test.ts", "**/*.test.tsx"]
+}
